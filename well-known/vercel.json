@@ -1,0 +1,7 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/.well-known/assetlinks.json", "destination": "/well-known/assetlinks.json" }
+  ]
+}
