@@ -594,7 +594,7 @@ body { overflow-x:hidden; }
             <div class="grid-item card-3" onclick="openCollectivites()">
                 <div class="icon-box"><svg class="ico"><use href="#fa-building-columns"></use></svg></div>
                 <h3 class="item-title">Concours des<br>collectivités</h3>
-                <p class="item-desc">Mairies, régions et préfectures.</p>
+                <p class="item-desc">Mairies et régions.</p>
             </div>
             
             <!-- 4. Culture générale & actualité -->
@@ -677,7 +677,7 @@ body { overflow-x:hidden; }
 
             <div class="list-item collectivite-option" onclick="openCollectivites()">
                 <div class="list-icon"><svg class="ico"><use href="#fa-building-columns"></use></svg></div>
-                <div class="list-text">Concours des collectivités territoriales<br><span style="font-size:10px;font-weight:500;color:#999;">Mairies, régions et préfectures</span></div>
+                <div class="list-text">Concours des collectivités territoriales<br><span style="font-size:10px;font-weight:500;color:#999;">Mairies et régions</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
@@ -903,10 +903,10 @@ body { overflow-x:hidden; }
                 <div class="payment-plan-price">5 000 <small>FCFA / mois</small></div>
                 <div class="payment-benefit"><svg class="ico"><use href="#fa-circle-check"></use></svg> Accès aux contenus pendant 1 mois</div>
                 <div class="payment-methods">
-                    <button class="payment-method orange" onclick="showPayment('Orange Money','07 00 00 00','5 000 FCFA','Abonnement mensuel')">
+                    <button class="payment-method orange" onclick="showPayment('Orange Money','75 51 23 79','5 000 FCFA','Abonnement mensuel')">
                         <span class="payment-logo">OM</span><span><strong>Orange Money</strong><small>Payer maintenant</small></span><svg class="ico"><use href="#fa-chevron-right"></use></svg>
                     </button>
-                    <button class="payment-method moov" onclick="showPayment('Moov Money','01 00 00 00','5 000 FCFA','Abonnement mensuel')">
+                    <button class="payment-method moov" onclick="showPayment('Moov Money','72 04 29 08','5 000 FCFA','Abonnement mensuel')">
                         <span class="payment-logo">M</span><span><strong>Moov Money</strong><small>Payer maintenant</small></span><svg class="ico"><use href="#fa-chevron-right"></use></svg>
                     </button>
                 </div>
@@ -916,10 +916,10 @@ body { overflow-x:hidden; }
                 <div class="payment-plan-price">20 000 <small>FCFA / an</small></div>
                 <div class="payment-benefit"><svg class="ico"><use href="#fa-circle-check"></use></svg> Économisez 40 000 FCFA par rapport au mensuel</div>
                 <div class="payment-methods">
-                    <button class="payment-method orange" onclick="showPayment('Orange Money','07 00 00 00','20 000 FCFA','Abonnement annuel')">
+                    <button class="payment-method orange" onclick="showPayment('Orange Money','75 51 23 79','20 000 FCFA','Abonnement annuel')">
                         <span class="payment-logo">OM</span><span><strong>Orange Money</strong><small>Payer maintenant</small></span><svg class="ico"><use href="#fa-chevron-right"></use></svg>
                     </button>
-                    <button class="payment-method moov" onclick="showPayment('Moov Money','01 00 00 00','20 000 FCFA','Abonnement annuel')">
+                    <button class="payment-method moov" onclick="showPayment('Moov Money','72 04 29 08','20 000 FCFA','Abonnement annuel')">
                         <span class="payment-logo">M</span><span><strong>Moov Money</strong><small>Payer maintenant</small></span><svg class="ico"><use href="#fa-chevron-right"></use></svg>
                     </button>
                 </div>
@@ -942,7 +942,7 @@ body { overflow-x:hidden; }
             <h2 id="payment-title">Orange Money</h2>
             <div id="payment-plan" style="font-size:10px;color:#7b8983;margin:4px 0 12px;font-weight:700;">Abonnement mensuel • 5 000 FCFA</div>
             <p class="modal-subtitle">Utilisez le numéro ci-dessous pour effectuer votre paiement.</p>
-            <div class="payment-number" id="payment-number">07 00 00 00</div>
+            <div class="payment-number" id="payment-number">75 51 23 79</div>
             <div class="payment-steps">
                 <div><b>1</b><span>Effectuez le paiement de <strong id="payment-amount">5 000 FCFA</strong>.</span></div>
                 <div><b>2</b><span>Conservez la capture du reçu.</span></div>
@@ -1135,13 +1135,17 @@ body { overflow-x:hidden; }
         document.getElementById('side-menu-overlay').classList.toggle('open');
     }
 
+    let suppressHistoryPush = false;
+
     function goTo(viewId, titleStr = "") {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
         
         if (viewHistory[viewHistory.length - 1] !== viewId) {
             viewHistory.push(viewId);
-            window.history.pushState({ view: viewId }, ""); 
+            if (!suppressHistoryPush) {
+                try { history.pushState({ hnfView: viewId }, '', location.pathname + location.search); } catch (e) {}
+            }
         }
 
         const mainHeader = document.querySelector('.header');
@@ -1153,6 +1157,7 @@ body { overflow-x:hidden; }
             subHeader.style.display = 'none';
             updateBottomNav(0);
         } else if (viewId === 'view-downloads') {
+            // L'écran Téléchargements possède son propre en-tête, comme dans la maquette.
             mainHeader.style.display = 'none';
             subHeader.style.display = 'none';
             updateBottomNav(2);
@@ -1169,10 +1174,6 @@ body { overflow-x:hidden; }
     }
 
     function goBack() {
-        window.history.back();
-    }
-
-    window.addEventListener('popstate', function(event) {
         if (viewHistory.length > 1) {
             viewHistory.pop();
             let previousView = viewHistory[viewHistory.length - 1];
@@ -1184,30 +1185,18 @@ body { overflow-x:hidden; }
             if(previousView === 'view-collectivites') title = 'Concours des collectivités';
             if(previousView === 'view-concours-directs') title = 'Concours Direct';
             
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(previousView).classList.add('active');
+            suppressHistoryPush = true;
+            goTo(previousView, title);
+            suppressHistoryPush = false;
+        }
+    }
 
-            const mainHeader = document.querySelector('.header');
-            const subHeader = document.getElementById('secondary-header');
-            const headerTitle = document.getElementById('global-header-title');
-
-            if (previousView === 'view-home') {
-                mainHeader.style.display = 'flex';
-                subHeader.style.display = 'none';
-                updateBottomNav(0);
-            } else if (previousView === 'view-downloads') {
-                mainHeader.style.display = 'none';
-                subHeader.style.display = 'none';
-                updateBottomNav(2);
-            } else {
-                mainHeader.style.display = 'none';
-                subHeader.style.display = 'flex';
-                headerTitle.innerText = title;
-                
-                if(previousView === 'view-profile') updateBottomNav(3);
-                else if(previousView === 'view-concours-hub' || previousView === 'view-categories' || previousView === 'view-concours-directs' || previousView === 'view-subcategories' || previousView === 'view-collectivites') updateBottomNav(1);
-                else updateBottomNav(-1);
-            }
+    // Relie le bouton "retour" natif d'Android (et le geste retour) à la
+    // navigation interne de l'appli : il recule d'abord dans les écrans,
+    // et ne ferme l'appli que lorsqu'il n'y a plus rien à afficher derrière.
+    window.addEventListener('popstate', function () {
+        if (viewHistory.length > 1) {
+            goBack();
         }
     });
 
@@ -1734,4 +1723,3 @@ body { overflow-x:hidden; }
     </script>
 </body>
 </html>
-
