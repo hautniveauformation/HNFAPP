@@ -434,6 +434,28 @@ body { overflow-x:hidden; }
 .collectivites-frame{width:100%;height:calc(100vh - 58px);border:0;background:#f4f6f9;}
 
         .ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; fill: currentColor; flex-shrink: 0; }
+                /* ===== CORRECTION ALIGNEMENT TÉLÉCHARGEMENTS ===== */
+        .downloads-list {
+            padding-left: 30px !important;
+            padding-right: 30px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            overflow: hidden;
+        }
+        .download-card {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100%;
+        }
+        
+        /* Pour que l'alignement reste parfait aussi sur les petits téléphones */
+        @media (max-width:430px) {
+            .downloads-list {
+                padding-left: 18px !important;
+                padding-right: 18px !important;
+            }
+        }
+
 </style>
 </head>
 <body>
