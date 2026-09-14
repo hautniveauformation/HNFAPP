@@ -1,5 +1,5 @@
 // Service worker HNF — permet l'installation et l'usage hors-ligne de l'appli.
-const CACHE_NAME = "hnf-app-v1";
+const CACHE_NAME = "hnf-app-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -29,14 +29,35 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Stratégie : "cache d'abord" pour la coquille de l'appli (fonctionne hors-ligne),
-// on ne touche jamais aux requêtes vers d'autres sites (ex. concourscomplet.vercel.app),
+// On ne touche jamais aux requêtes vers d'autres sites (ex. concourscomplet.vercel.app),
 // qui doivent toujours passer par le réseau normalement.
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return; // laisser passer les ressources externes
+  if (url.origin !== self.location.origin) return;
   if (event.request.method !== "GET") return;
 
+  const isPageOrData =
+    event.request.mode === "navigate" ||
+    url.pathname.endsWith(".html") ||
+    url.pathname.endsWith("/") ||
+    url.pathname.endsWith("manifest.json");
+
+  if (isPageOrData) {
+    // Réseau d'abord : on va toujours chercher la dernière version en ligne.
+    // On ne se rabat sur la version enregistrée que si le téléphone est hors-ligne.
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // Pour le reste (icônes, etc. qui changent rarement) : cache d'abord, pour la rapidité.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
