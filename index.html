@@ -392,81 +392,6 @@
 .downloads-empty{min-height:calc(100vh - 390px);padding-bottom:80px}.downloads-empty-icon{margin-bottom:22px}.downloads-empty-icon i{font-size:65px}.downloads-empty h3{font-size:25px}.downloads-empty p{font-size:19px}
 .downloads-grid-toggle{bottom:104px;right:14px;width:78px;height:78px;font-size:30px}
 
-/* ===== CORRECTION AFFICHAGE : CARTES DES TÉLÉCHARGEMENTS ===== */
-.downloads-list {
-    width: 100%;
-    box-sizing: border-box;
-    min-width: 0;
-}
-
-.download-card {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    min-width: 0;
-    align-items: flex-start;
-}
-
-.download-card-info {
-    min-width: 0;
-    max-width: 100%;
-    flex: 1 1 auto;
-    overflow: hidden;
-}
-
-.download-card-title {
-    min-width: 0;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    line-height: 1.3;
-}
-
-.download-card-meta {
-    min-width: 0;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    line-height: 1.4;
-}
-
-@media (max-width: 360px) {
-    .downloads-list {
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
-    .download-card {
-        gap: 9px;
-        padding: 11px 10px 11px 11px;
-    }
-
-    .download-card-icon {
-        width: 42px;
-        height: 42px;
-        flex-basis: 42px;
-        font-size: 19px;
-    }
-
-    .download-card-delete {
-        width: 36px;
-        height: 36px;
-        flex-basis: 36px;
-    }
-
-    .download-card-title {
-        font-size: 15px;
-    }
-
-    .download-card-meta {
-        font-size: 10.5px;
-    }
-}
-
 /* ===== CORRECTION MOBILE : TÉLÉCHARGEMENTS ===== */
 html, body { width:100%; min-width:0; }
 body { overflow-x:hidden; }
@@ -509,6 +434,10 @@ body { overflow-x:hidden; }
 .collectivites-frame{width:100%;height:calc(100vh - 58px);border:0;background:#f4f6f9;}
 
         .ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; fill: currentColor; flex-shrink: 0; }
+        /* Protection anti-copie : la sélection de texte est désactivée partout,
+           sauf dans les vrais champs de saisie (nom, mot de passe, recherche...). */
+        body, .view, .card, .list-item, .item-title, .item-desc { -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        input, textarea { -webkit-user-select: text; -moz-user-select: text; user-select: text; -webkit-touch-callout: default; }
 </style>
 </head>
 <body>
@@ -781,51 +710,45 @@ body { overflow-x:hidden; }
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale', 'https://concourscomplet.vercel.app/CD/indexCG.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
                 <div class="list-text">Culture générale<br><span style="font-size:10px;font-weight:500;color:#999;">Actualités et connaissances</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Français', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Français', 'https://concourscomplet.vercel.app/CD/indexfrançais.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-language"></use></svg></div>
                 <div class="list-text">Français<br><span style="font-size:10px;font-weight:500;color:#999;">Grammaire, orthographe, conjugaison</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Littérature', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Littérature', 'https://concourscomplet.vercel.app/CD/indexlittérature.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-book"></use></svg></div>
                 <div class="list-text">Littérature<br><span style="font-size:10px;font-weight:500;color:#999;">Auteurs, courants, œuvres</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Mathématiques', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Mathématiques', 'https://concourscomplet.vercel.app/CD/indexmath.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-calculator"></use></svg></div>
                 <div class="list-text">Mathématiques<br><span style="font-size:10px;font-weight:500;color:#999;">Algèbre, géométrie, probabilités</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('SVT', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('SVT', 'https://concourscomplet.vercel.app/CD/indexSVT.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-microscope"></use></svg></div>
                 <div class="list-text">SVT<br><span style="font-size:10px;font-weight:500;color:#999;">Sciences de la Vie et de la Terre</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Psychotechnique', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Psychotechnique', 'https://concourscomplet.vercel.app/CD/indexpsycho.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-brain"></use></svg></div>
                 <div class="list-text">Psychotechnique<br><span style="font-size:10px;font-weight:500;color:#999;">Tests de logique et d'aptitude</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Chimie', '#')">
-                <div class="list-icon"><svg class="ico"><use href="#fa-flask"></use></svg></div>
-                <div class="list-text">Chimie<br><span style="font-size:10px;font-weight:500;color:#999;">Réactions, molécules, atomes</span></div>
-                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
-            </div>
-
-            <div class="list-item collectivite-option" onclick="checkAccess('Physique', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Physique/Chimie', 'https://concourscomplet.vercel.app/CD/indexphysique/chimie.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-atom"></use></svg></div>
-                <div class="list-text">Physique<br><span style="font-size:10px;font-weight:500;color:#999;">Mécanique, électricité, optique</span></div>
+                <div class="list-text">Physique / Chimie<br><span style="font-size:10px;font-weight:500;color:#999;">Mécanique, réactions, atomes</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
         </div>
@@ -1316,12 +1239,16 @@ body { overflow-x:hidden; }
             goTo('view-profile', 'Activation requise');
             setTimeout(() => { document.getElementById('payment-modal').classList.add('open'); }, 220);
         } else {
-            alert("✅ ACCÈS AUTORISÉ ! \nOuverture de la section : " + itemName);
+            if (itemUrl && itemUrl !== '#') {
+                openCollectiviteLink(itemName, itemUrl);
+            } else {
+                alert("✅ ACCÈS AUTORISÉ ! \nOuverture de la section : " + itemName);
+            }
         }
     }
 
     function isDirectSub(name) {
-        const subs = ['Accompagnement final', 'Culture générale', 'Français', 'Littérature', 'Mathématiques', 'SVT', 'Psychotechnique', 'Chimie', 'Physique'];
+        const subs = ['Accompagnement final', 'Culture générale', 'Français', 'Littérature', 'Mathématiques', 'SVT', 'Psychotechnique', 'Physique/Chimie'];
         return subs.includes(name);
     }
     function isColSub(name) {
@@ -1795,6 +1722,19 @@ body { overflow-x:hidden; }
                 navigator.serviceWorker.register('sw.js').catch(() => {});
             });
         }
+    </script>
+    <script>
+        // Protection anti-copie : bloque le menu (clic long / clic droit), le
+        // copier-coller et la sélection, sauf dans les vrais champs de saisie
+        // (nom, mot de passe, recherche...) où l'utilisateur doit pouvoir taper normalement.
+        function estChampDeSaisie(el) {
+            return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+        }
+        ['contextmenu', 'copy', 'cut', 'selectstart'].forEach(function (evt) {
+            document.addEventListener(evt, function (e) {
+                if (!estChampDeSaisie(e.target)) e.preventDefault();
+            });
+        });
     </script>
 </body>
 </html>
