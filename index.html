@@ -194,7 +194,7 @@
         .form-group { margin-bottom: 15px; }
         .form-control { width: 100%; padding: 14px 15px; border: 1px solid #dce6e1; border-radius: 13px; box-sizing: border-box; background: #f7faf8; font-size: 13px; font-family: 'Poppins', sans-serif; transition: 0.2s;}
         .form-control:focus { outline: none; border-color: var(--primary-2); box-shadow: 0 0 0 4px rgba(11,128,99,0.09); background: white;}
-        .btn-primary { width: 100%; background: linear-gradient(135deg, #075b46, #0b8063); color: white; border: none; padding: 15px; border-radius: 13px; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: 'Poppins', sans-serif; box-shadow: 0 8px 18px rgba(7,91,70,0.18); transition: 0.2s;}
+        .btn-primary { width: 100%; background: linear-gradient(135deg, #075b46, #0b8063); color: white; border: none; padding: 15px; border-radius: 13px; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: 'Poppins', sans-serif; box-shadow: 0 8px 18px rgba(7,91,70,0.18); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; box-sizing: border-box;}
         .btn-primary:active { transform: translateY(2px); }
         .btn-yellow { background: linear-gradient(135deg, #f7c928, #f2b91c); color: var(--text-dark); }
         .auth-form { display: none; }
@@ -258,6 +258,43 @@
         .payment-plan-price small { font-size:9px; color:#9a7410; font-weight:700; }
         .payment-benefit { display:flex; align-items:center; gap:6px; margin:-7px 0 13px; font-size:9px; color:#587168; font-weight:600; }
         .payment-benefit i { color:#0b8063; font-size:10px; }
+
+        /* --- TABLEAU DES ABONNEMENTS (PROFIL) --- */
+        .sub-plans-list { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+        .sub-plan-row { background:#fff; border:1px solid #ecefe9; border-radius:16px; padding:13px 14px; box-shadow:0 6px 16px rgba(18,53,42,0.05); }
+        .sub-plan-title { font-size:12.5px; font-weight:700; color:#17241f; margin-bottom:9px; display:flex; align-items:center; gap:8px; }
+        .sub-plan-title .mini-icon { width:26px; height:26px; font-size:12px; flex-shrink:0; }
+        .sub-plan-options { display:flex; gap:8px; flex-wrap:wrap; }
+        .sub-plan-option { flex:1; min-width:126px; display:flex; align-items:center; justify-content:space-between; gap:8px; background:#f7faf8; border-radius:12px; padding:9px 9px 9px 11px; }
+        .sub-plan-price { font-size:12px; font-weight:800; color:#587168; line-height:1.15; }
+        .sub-plan-price small { display:block; font-size:8.5px; font-weight:700; letter-spacing:.3px; color:#9aa59f; text-transform:uppercase; margin-top:1px; }
+        .btn-choose { background:linear-gradient(135deg,#075b46,#0b8063); color:#fff; border:none; padding:8px 13px; border-radius:10px; font-size:10.5px; font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif; white-space:nowrap; box-shadow:0 6px 14px rgba(7,91,70,.18); transition:.15s; }
+        .btn-choose:active { transform:scale(.95); }
+        .btn-choose.whatsapp { background:linear-gradient(135deg,#25D366,#1ebe5c); box-shadow:0 6px 14px rgba(37,211,102,.22); }
+
+        /* --- VUE : MOYENS DE PAIEMENT --- */
+        .payment-recap { text-align:center; }
+        .payment-recap .payment-kicker { margin-bottom:6px; }
+        .payment-recap-value { font-size:15px; font-weight:800; color:#17241f; }
+        .payment-recap-value small { display:block; margin-top:4px; font-size:12px; font-weight:700; color:#0b8063; }
+
+        /* --- CARTES DE PAIEMENT (LOGOS ORANGE MONEY / MOOV MONEY) --- */
+        .big-pay-card { display:flex; align-items:center; gap:13px; width:100%; padding:14px; border-radius:18px; border:1.5px solid; cursor:pointer; font-family:'Poppins',sans-serif; text-align:left; transition:.15s; }
+        .big-pay-card:active { transform:scale(.98); }
+        .big-pay-card.orange-card { border-color:#f6c98a; background:linear-gradient(135deg,#fff9f0,#fdf1de); }
+        .big-pay-card.moov-card { border-color:#b9c9f5; background:linear-gradient(135deg,#f0f3fe,#e7edfd); }
+        .big-pay-logo { width:54px; height:54px; border-radius:15px; background:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 10px rgba(0,0,0,0.08); }
+        .big-pay-info { flex:1; min-width:0; }
+        .big-pay-title { display:block; font-size:15px; font-weight:800; margin-bottom:1px; }
+        .big-pay-title.t-orange { color:#e6790a; }
+        .big-pay-title.t-moov { color:#3457c9; }
+        .big-pay-sub { display:block; font-size:10.5px; font-weight:600; margin-bottom:7px; }
+        .big-pay-sub.t-orange { color:#c9761c; }
+        .big-pay-sub.t-moov { color:#5875d1; }
+        .big-pay-feature { display:flex; align-items:center; gap:5px; font-size:9.5px; font-weight:700; color:#4b564f; }
+        .big-pay-feature .ico { font-size:11px; flex-shrink:0; }
+        .big-pay-feature span { font-family:'Poppins',sans-serif; letter-spacing:.2px; word-break:break-all; }
+        .btn-primary.btn-call { background:linear-gradient(135deg,#1b6fd1,#2f8be0); box-shadow:0 10px 22px rgba(27,111,209,.25); margin-bottom:10px; }
         /* --- BOTTOM NAV --- */
         .bottom-nav { background: rgba(255,255,255,0.94); position: fixed; bottom: 0; width: 100%; max-width: 420px; display: flex; justify-content: space-around; padding: 10px 0 15px 0; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 -8px 28px rgba(20,53,43,0.10); border-top: 1px solid rgba(220,231,226,0.9); z-index: 100; border-top-left-radius: 20px; border-top-right-radius: 20px;}
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #a0a0a0; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; min-width: 58px; padding: 5px 8px; border-radius: 14px; transition: 0.18s;}
@@ -500,6 +537,7 @@ body { overflow-x:hidden; }
 <symbol id="fa-user-graduate" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0Z"/><path d="m4 9.5 8-3 8 3-8 3Z"/><path d="M6.5 10.6v3.1c0 1 2.5 1.9 5.5 1.9s5.5-.9 5.5-1.9v-3.1"/></symbol>
 <symbol id="fa-whatsapp" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 16.3 6.7 20l3.8-1.2a7.3 7.3 0 0 0 10.9-6.3A7.3 7.3 0 1 0 8 16.3Z" fill="none" stroke="#fff" stroke-width="0"/><path d="M9.2 8.5c.2-.4.4-.4.6-.4h.5c.2 0 .4 0 .6.4.2.5.7 1.6.7 1.7.1.1.1.3 0 .4-.1.2-.2.3-.3.4l-.4.5c-.1.1-.2.3-.1.5.2.3.7 1.1 1.5 1.8.9.8 1.6 1.1 1.9 1.2.2.1.4.1.5-.1l.5-.6c.1-.2.3-.2.5-.1l1.6.8c.2.1.3.1.4.3.1.2.1.9-.2 1.3-.3.5-1.2 1-2 1.1-.6 0-1.4 0-3.5-1-2.6-1.2-4.3-3.9-4.4-4.1-.1-.2-.9-1.3-.9-2.4 0-1.2.6-1.7.8-2Z" fill="#25D366"/></symbol>
 <symbol id="fa-xmark" viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+<symbol id="fa-comment-sms" viewBox="0 0 24 24"><path d="M4 4.5h16a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H9l-4.2 3.3A.8.8 0 0 1 3.5 20V6a1.5 1.5 0 0 1 1.5-1.5Z"/><rect x="6.5" y="9" width="2.2" height="4.2" rx="0.6" fill="#fff"/><rect x="10.9" y="9" width="2.2" height="4.2" rx="0.6" fill="#fff"/><rect x="15.3" y="9" width="2.2" height="4.2" rx="0.6" fill="#fff"/></symbol>
 </svg>
 
 
@@ -801,20 +839,20 @@ body { overflow-x:hidden; }
             <!-- Inscription -->
             <div id="form-signup" class="auth-form active">
                 <div class="row">
-                    <div class="form-group" style="flex: 1;"><input type="text" class="form-control" placeholder="Nom"></div>
-                    <div class="form-group" style="flex: 1;"><input type="text" class="form-control" placeholder="Prénom"></div>
+                    <div class="form-group" style="flex: 1;"><input type="text" id="signup-nom" class="form-control" placeholder="Nom"></div>
+                    <div class="form-group" style="flex: 1;"><input type="text" id="signup-prenom" class="form-control" placeholder="Prénom"></div>
                 </div>
                 <div class="row">
-                    <div class="form-group" style="flex: 1;"><input type="text" class="form-control" placeholder="Ville"></div>
+                    <div class="form-group" style="flex: 1;"><input type="text" id="signup-ville" class="form-control" placeholder="Ville"></div>
                     <div class="form-group" style="flex: 1;">
-                        <select class="form-control" style="color: #666;">
+                        <select id="signup-sexe" class="form-control" style="color: #666;">
                             <option>Sexe</option><option>Homme</option><option>Femme</option>
                         </select>
                     </div>
                 </div>
-                <div class="form-group"><input type="tel" class="form-control" placeholder="Numéro WhatsApp"></div>
-                <div class="form-group"><input type="password" class="form-control" placeholder="Mot de passe"></div>
-                <button class="btn-primary btn-yellow" onclick="processLogin()">Créer mon compte</button>
+                <div class="form-group"><input type="tel" id="signup-whatsapp" class="form-control" placeholder="Numéro WhatsApp"></div>
+                <div class="form-group"><input type="password" id="signup-password" class="form-control" placeholder="Mot de passe"></div>
+                <button class="btn-primary btn-yellow" onclick="processSignup()">Créer mon compte</button>
             </div>
 
             <!-- Connexion -->
@@ -870,8 +908,8 @@ body { overflow-x:hidden; }
     <div id="view-profile" class="view">
         <div class="profile-card">
             <div class="avatar-large"><svg class="ico"><use href="#fa-user"></use></svg></div>
-            <h2 style="margin:0; font-size: 18px; font-weight: 700; color: var(--text-dark);">Amadou Barry</h2>
-            <p style="color:var(--text-gray); margin:5px 0 0 0; font-size: 13px;">+226 70 00 00 00</p>
+            <h2 id="profile-name" style="margin:0; font-size: 18px; font-weight: 700; color: var(--text-dark);">Amadou Barry</h2>
+            <p id="profile-phone" style="color:var(--text-gray); margin:5px 0 0 0; font-size: 13px;">+226 70 00 00 00</p>
             <div class="badge badge-inactive">Statut : Compte Inactif</div>
         </div>
 
@@ -884,42 +922,91 @@ body { overflow-x:hidden; }
                 </div>
             </div>
 
-            <div class="payment-tabs" id="payment-tabs" role="tablist" aria-label="Choix de l'abonnement">
-                <div class="payment-tab-slider"></div>
-                <button type="button" class="payment-tab active" id="payment-tab-monthly" onclick="switchPaymentPlan('monthly')" role="tab" aria-selected="true">
-                    <span class="payment-tab-title">Mensuel</span>
-                    <span class="payment-tab-price">5 000 FCFA / mois</span>
-                </button>
-                <button type="button" class="payment-tab" id="payment-tab-annual" onclick="switchPaymentPlan('annual')" role="tab" aria-selected="false">
-                    <span class="payment-tab-title">Annuel</span>
-                    <span class="payment-tab-price">20 000 FCFA / an</span>
-                    <span class="payment-tab-badge">MEILLEURE OFFRE</span>
-                </button>
-            </div>
-
-            <div id="payment-plan-monthly" class="payment-plan active">
-                <div class="payment-plan-price">5 000 <small>FCFA / mois</small></div>
-                <div class="payment-benefit"><svg class="ico"><use href="#fa-circle-check"></use></svg> Accès aux contenus pendant 1 mois</div>
-                <div class="payment-methods">
-                    <button class="payment-method orange" onclick="showPayment('Orange Money','75 51 23 79','5 000 FCFA','Abonnement mensuel')">
-                        <span class="payment-logo">OM</span><span><strong>Orange Money</strong><small>Payer maintenant</small></span><svg class="ico"><use href="#fa-chevron-right"></use></svg>
-                    </button>
-                    <button class="payment-method moov" onclick="showPayment('Moov Money','72 04 29 08','5 000 FCFA','Abonnement mensuel')">
-                        <span class="payment-logo">M</span><span><strong>Moov Money</strong><small>Payer maintenant</small></span><svg class="ico"><use href="#fa-chevron-right"></use></svg>
-                    </button>
+            <div class="sub-plans-list">
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></span> Accompagnement final Pro</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">4 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Accompagnement final Pro','4 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div id="payment-plan-annual" class="payment-plan">
-                <div class="payment-plan-price">20 000 <small>FCFA / an</small></div>
-                <div class="payment-benefit"><svg class="ico"><use href="#fa-circle-check"></use></svg> Économisez 40 000 FCFA par rapport au mensuel</div>
-                <div class="payment-methods">
-                    <button class="payment-method orange" onclick="showPayment('Orange Money','75 51 23 79','20 000 FCFA','Abonnement annuel')">
-                        <span class="payment-logo">OM</span><span><strong>Orange Money</strong><small>Payer maintenant</small></span><svg class="ico"><use href="#fa-chevron-right"></use></svg>
-                    </button>
-                    <button class="payment-method moov" onclick="showPayment('Moov Money','72 04 29 08','20 000 FCFA','Abonnement annuel')">
-                        <span class="payment-logo">M</span><span><strong>Moov Money</strong><small>Payer maintenant</small></span><svg class="ico"><use href="#fa-chevron-right"></use></svg>
-                    </button>
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></span> Accompagnement final Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">3 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Accompagnement final Direct','3 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-briefcase"></use></svg></span> Concours Professionnel</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">20 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Professionnel (Annuel)','20 000 FCFA')">Choisir</button>
+                        </div>
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">5 000 <small>FCFA / Mois</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Professionnel (Mensuel)','5 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-road"></use></svg></span> Concours Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">10 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Direct','10 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-landmark"></use></svg></span> Concours collectivités territoriales</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">15 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours collectivités territoriales','15 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-globe"></use></svg></span> Culture générale et actualité Pro</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">10 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Culture générale et actualité Pro','10 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-globe"></use></svg></span> Culture générale et actualité Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">4 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Culture générale et actualité Direct','4 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></span> Formation spéciale et intensive</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">Sur demande</span>
+                            <button class="btn-choose whatsapp" onclick="openSpecialFormationWhatsApp()">
+                                <svg class="ico" style="vertical-align:-2px; font-size:11px; margin-right:3px;"><use href="#fa-whatsapp"></use></svg>Contacter
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -931,11 +1018,53 @@ body { overflow-x:hidden; }
         </button>
     </div>
 
+    <!-- VUE : MOYENS DE PAIEMENT -->
+    <div id="view-payment-methods" class="view">
+        <div class="payment-section" style="margin-top:20px;">
+            <div class="payment-recap">
+                <span class="payment-kicker">VOTRE CHOIX</span>
+                <div class="payment-recap-value" id="payment-choice-recap">—</div>
+            </div>
+        </div>
+
+        <div class="payment-section">
+            <div class="payment-head">
+                <div>
+                    <span class="payment-kicker">PAIEMENT</span>
+                    <h3><svg class="ico"><use href="#fa-mobile-screen-button"></use></svg> Choisissez un moyen de paiement</h3>
+                </div>
+            </div>
+            <div class="payment-methods">
+                <button class="big-pay-card orange-card" onclick="choosePaymentMethod('Orange Money','75 51 23 79')">
+                    <span class="big-pay-logo">
+                        <svg viewBox="0 0 64 64" width="32" height="32"><circle cx="32" cy="32" r="30" fill="#FF7900"/><path d="M20 34 31 23 M31 23 31 31 M31 23 23 23" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 30 33 41 M33 41 33 33 M33 41 41 41" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="big-pay-info">
+                        <span class="big-pay-title t-orange">Orange Money</span>
+                        <span class="big-pay-sub t-orange">Paiement via Orange Money</span>
+                        <span class="big-pay-feature"><svg class="ico"><use href="#fa-mobile-screen-button"></use></svg> <span id="orange-ussd-feature">Composez le code USSD fourni</span></span>
+                    </span>
+                </button>
+                <button class="big-pay-card moov-card" onclick="choosePaymentMethod('Moov Money','72 04 29 08')">
+                    <span class="big-pay-logo">
+                        <svg viewBox="0 0 64 64" width="30" height="30"><rect x="12" y="12" width="40" height="40" rx="9" fill="#FF7900" transform="rotate(45 32 32)"/><text x="32" y="39" font-family="Poppins, sans-serif" font-weight="800" font-size="20" fill="#fff" text-anchor="middle">M</text></svg>
+                    </span>
+                    <span class="big-pay-info">
+                        <span class="big-pay-title t-moov">Moov Money</span>
+                        <span class="big-pay-sub t-moov">Paiement via Moov Money</span>
+                        <span class="big-pay-feature"><svg class="ico"><use href="#fa-comment-sms"></use></svg> <span id="moov-ussd-feature">Recevez un code OTP par SMS</span></span>
+                    </span>
+                </button>
+            </div>
+            <div class="payment-note"><svg class="ico"><use href="#fa-circle-info"></use></svg> Après le paiement, envoyez la capture de votre reçu pour l'activation.</div>
+        </div>
+    </div>
+
     <!-- FENÊTRE DE PAIEMENT -->
     <div class="modal-overlay" id="payment-modal" onclick="closePayment(event)">
         <div class="payment-modal" onclick="event.stopPropagation()">
             <button class="modal-close" onclick="closePayment()"><svg class="ico"><use href="#fa-xmark"></use></svg></button>
-            <div class="modal-payment-icon"><svg class="ico"><use href="#fa-mobile-screen-button"></use></svg></div>
+            <div class="modal-payment-icon" id="payment-modal-icon"><svg class="ico"><use href="#fa-mobile-screen-button"></use></svg></div>
             <span class="payment-kicker">MODE DE PAIEMENT</span>
             <h2 id="payment-title">Orange Money</h2>
             <div id="payment-plan" style="font-size:10px;color:#7b8983;margin:4px 0 12px;font-weight:700;">Abonnement mensuel • 5 000 FCFA</div>
@@ -946,6 +1075,9 @@ body { overflow-x:hidden; }
                 <div><b>2</b><span>Conservez la capture du reçu.</span></div>
                 <div><b>3</b><span>Envoyez-la à l'assistance pour activation.</span></div>
             </div>
+            <a class="btn-primary btn-call" id="payment-dial-btn" href="tel:">
+                <svg class="ico"><use href="#fa-mobile-screen-button"></use></svg> Je veux faire le paiement
+            </a>
             <button class="btn-primary" onclick="closePayment(); alert('Votre paiement doit être confirmé avant l’activation du compte.')">
                 <svg class="ico"><use href="#fa-check"></use></svg> J'ai effectué le paiement
             </button>
@@ -1024,6 +1156,10 @@ body { overflow-x:hidden; }
     let isLoggedIn = false;
     let userPermissions = [];
     let viewHistory = ['view-home'];
+    let userName = 'Amadou Barry';
+    let userPhone = '+226 70 00 00 00';
+    let selectedPlanName = '';
+    let selectedPlanPrice = '';
 
     window.onload = function() {
         // Init catégories pro
@@ -1182,6 +1318,8 @@ body { overflow-x:hidden; }
             if(previousView === 'view-auth') title = 'Authentification';
             if(previousView === 'view-collectivites') title = 'Concours des collectivités';
             if(previousView === 'view-concours-directs') title = 'Concours Direct';
+            if(previousView === 'view-profile') title = 'Mon Profil';
+            if(previousView === 'view-payment-methods') title = 'Paiement';
             
             suppressHistoryPush = true;
             goTo(previousView, title);
@@ -1293,28 +1431,83 @@ body { overflow-x:hidden; }
         goTo('view-home', 'Accueil');
     }
 
-    function switchPaymentPlan(plan) {
-        const tabs = document.getElementById('payment-tabs');
-        const monthlyTab = document.getElementById('payment-tab-monthly');
-        const annualTab = document.getElementById('payment-tab-annual');
-        const monthlyPlan = document.getElementById('payment-plan-monthly');
-        const annualPlan = document.getElementById('payment-plan-annual');
-        const isAnnual = plan === 'annual';
+    // Inscription : extrait discrètement Nom, Prénom et Numéro WhatsApp,
+    // connecte l'utilisateur puis l'envoie directement sur son Profil.
+    function processSignup() {
+        const nom = document.getElementById('signup-nom').value.trim();
+        const prenom = document.getElementById('signup-prenom').value.trim();
+        const whatsapp = document.getElementById('signup-whatsapp').value.trim();
 
-        tabs.classList.toggle('annual', isAnnual);
-        monthlyTab.classList.toggle('active', !isAnnual);
-        annualTab.classList.toggle('active', isAnnual);
-        monthlyTab.setAttribute('aria-selected', String(!isAnnual));
-        annualTab.setAttribute('aria-selected', String(isAnnual));
-        monthlyPlan.classList.toggle('active', !isAnnual);
-        annualPlan.classList.toggle('active', isAnnual);
+        if (!nom || !prenom || !whatsapp) {
+            alert("Merci de renseigner au moins le nom, le prénom et le numéro WhatsApp.");
+            return;
+        }
+
+        userName = (nom + ' ' + prenom).trim();
+        userPhone = whatsapp;
+        isLoggedIn = true;
+
+        document.getElementById('home-profile-icon').classList.add('logged-in');
+        document.getElementById('menu-name').innerText = userName;
+        document.getElementById('menu-phone').innerText = userPhone;
+        document.getElementById('profile-name').innerText = userName;
+        document.getElementById('profile-phone').innerText = userPhone;
+
+        goTo('view-profile', 'Mon Profil');
     }
+
+    // Mémorise la formule choisie dans le tableau d'abonnements puis
+    // redirige vers l'écran des moyens de paiement.
+    function selectPlan(planName, planPrice) {
+        selectedPlanName = planName;
+        selectedPlanPrice = planPrice;
+        const recap = document.getElementById('payment-choice-recap');
+        recap.innerHTML = 'Choix : ' + planName + '<small>' + planPrice + '</small>';
+
+        // Génère les codes USSD en fonction du montant de la formule choisie
+        const amount = planPrice.replace(/[^0-9]/g, '');
+        document.getElementById('orange-ussd-feature').innerText = '*144*2*1*75512379*' + amount + '#';
+        document.getElementById('moov-ussd-feature').innerText = '*555*2*1*72042908*' + amount + '#';
+
+        goTo('view-payment-methods', 'Paiement');
+    }
+
+    // Ouvre le modal de paiement avec la formule mémorisée précédemment.
+    function choosePaymentMethod(method, number) {
+        showPayment(method, number, selectedPlanPrice || '—', selectedPlanName || 'Abonnement');
+    }
+
+    // Bouton "Formation spéciale et intensive" : ouvre WhatsApp (lien factice).
+    function openSpecialFormationWhatsApp() {
+        window.open('https://wa.me/22670000000?text=' + encodeURIComponent('Bonjour, je suis intéressé(e) par la Formation spéciale et intensive.'), '_blank');
+    }
+
+    const orangeLogoSVG = '<svg viewBox="0 0 64 64" width="30" height="30"><circle cx="32" cy="32" r="30" fill="#FF7900"/><path d="M20 34 31 23 M31 23 31 31 M31 23 23 23" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 30 33 41 M33 41 33 33 M33 41 41 41" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const moovLogoSVG = '<svg viewBox="0 0 64 64" width="28" height="28"><rect x="12" y="12" width="40" height="40" rx="9" fill="#FF7900" transform="rotate(45 32 32)"/><text x="32" y="39" font-family="Poppins, sans-serif" font-weight="800" font-size="20" fill="#fff" text-anchor="middle">M</text></svg>';
+    let currentUSSDCode = '';
 
     function showPayment(method, number, amount = '5 000 FCFA', plan = 'Abonnement mensuel') {
         document.getElementById('payment-title').innerText = method;
         document.getElementById('payment-number').innerText = number;
         document.getElementById('payment-plan').innerText = plan + ' • ' + amount;
         document.getElementById('payment-amount').innerText = amount;
+        const iconBox = document.getElementById('payment-modal-icon');
+        iconBox.innerHTML = method === 'Orange Money' ? orangeLogoSVG : (method === 'Moov Money' ? moovLogoSVG : '<svg class="ico"><use href="#fa-mobile-screen-button"></use></svg>');
+        iconBox.style.background = '#fff';
+
+        // Construit le code USSD à composer, en fonction de l'opérateur et du montant,
+        // et le place directement dans le lien "tel:" (plus fiable qu'une navigation en JS)
+        const numberDigits = number.replace(/\s/g, '');
+        const amountDigits = amount.replace(/[^0-9]/g, '');
+        if (method === 'Orange Money') {
+            currentUSSDCode = '*144*2*1*' + numberDigits + '*' + amountDigits + '#';
+        } else if (method === 'Moov Money') {
+            currentUSSDCode = '*555*2*1*' + numberDigits + '*' + amountDigits + '#';
+        } else {
+            currentUSSDCode = '';
+        }
+        document.getElementById('payment-dial-btn').setAttribute('href', 'tel:' + encodeURIComponent(currentUSSDCode));
+
         document.getElementById('payment-modal').classList.add('open');
     }
 
