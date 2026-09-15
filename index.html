@@ -1327,20 +1327,34 @@ body { overflow-x:hidden; }
         goTo('view-collectivites', 'Concours des collectivités');
     }
 
+    // Remplace la fenêtre intégrée par une toute neuve : ça évite que le
+    // bouton retour du téléphone ne redéroule l'historique de toutes les
+    // pages visitées depuis le début (Administration Générale, Français, etc.)
+    function fenetreIntegreeFraiche() {
+        const ancienne = document.getElementById('collectivites-frame');
+        if (!ancienne) return null;
+        const nouvelle = document.createElement('iframe');
+        nouvelle.id = 'collectivites-frame';
+        nouvelle.className = 'collectivites-frame';
+        nouvelle.title = 'Concours des collectivités';
+        nouvelle.setAttribute('allow', 'downloads');
+        ancienne.replaceWith(nouvelle);
+        return nouvelle;
+    }
+
     function openCollectiviteLink(name, url) {
         if (!navigator.onLine) {
             alert("Veuillez activer votre connexion Internet pour accéder à cette ressource.");
             return;
         }
         const overlay = document.getElementById('collectivites-frame-overlay');
-        const frame = document.getElementById('collectivites-frame');
         const title = document.getElementById('collectivites-frame-title');
+        const frame = fenetreIntegreeFraiche();
         if (!overlay || !frame) {
             window.open(url, '_blank');
             return;
         }
         if (title) title.textContent = name || 'Concours des collectivités';
-        if (frame) frame.removeAttribute('srcdoc');
         frame.src = url;
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden', 'false');
@@ -1349,8 +1363,7 @@ body { overflow-x:hidden; }
 
     function closeCollectiviteFrame() {
         const overlay = document.getElementById('collectivites-frame-overlay');
-        const frame = document.getElementById('collectivites-frame');
-        if (frame) { frame.srcdoc = ''; frame.src = 'about:blank'; }
+        fenetreIntegreeFraiche();
         if (overlay) {
             overlay.classList.remove('open');
             overlay.setAttribute('aria-hidden', 'true');
@@ -1540,15 +1553,14 @@ body { overflow-x:hidden; }
 
         const local = await getDownloadedContent(record.id);
         const overlay = document.getElementById('collectivites-frame-overlay');
-        const frame = document.getElementById('collectivites-frame');
         const title = document.getElementById('collectivites-frame-title');
 
         if (local && typeof local.content === 'string') {
+            const frame = fenetreIntegreeFraiche();
             if (title) title.textContent = record.title || 'Document';
             if (frame) {
                 /* La copie locale est chargée avec srcdoc : aucun accès Internet
                    n'est nécessaire pour ouvrir le document enregistré. */
-                frame.removeAttribute('src');
                 frame.srcdoc = '<base href="' + String(local.baseUrl || '').replace(/"/g, '&quot;') + '">' + local.content;
             }
             if (overlay) {
