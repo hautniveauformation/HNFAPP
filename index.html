@@ -1193,6 +1193,12 @@ body { overflow-x:hidden; }
     // navigation interne de l'appli : il recule d'abord dans les écrans,
     // et ne ferme l'appli que lorsqu'il n'y a plus rien à afficher derrière.
     window.addEventListener('popstate', function () {
+        const overlay = document.getElementById('collectivites-frame-overlay');
+        if (overlay && overlay.classList.contains('open')) {
+            closeCollectiviteFrame();
+            history.pushState({ hnfView: viewHistory[viewHistory.length - 1] }, '', location.pathname + location.search);
+            return;
+        }
         if (viewHistory.length > 1) {
             goBack();
         }
@@ -1334,6 +1340,7 @@ body { overflow-x:hidden; }
             return;
         }
         if (title) title.textContent = name || 'Concours des collectivités';
+        if (frame) frame.removeAttribute('srcdoc');
         frame.src = url;
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden', 'false');
