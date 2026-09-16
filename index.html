@@ -789,6 +789,36 @@ body { overflow-x:hidden; }
                 <div class="list-text">Physique / Chimie<br><span style="font-size:10px;font-weight:500;color:#999;">Mécanique, réactions, atomes</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Histoire/Géographie', 'https://concourscomplet.vercel.app/CD/indexhistoiregeo.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-earth-africa"></use></svg></div>
+                <div class="list-text">Histoire / Géographie<br><span style="font-size:10px;font-weight:500;color:#999;">Repères historiques et géographiques</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Économie', 'https://concourscomplet.vercel.app/CD/indexeconomie.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-coins"></use></svg></div>
+                <div class="list-text">Économie<br><span style="font-size:10px;font-weight:500;color:#999;">Notions économiques essentielles</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Sociologie', 'https://concourscomplet.vercel.app/CD/indexsociologie.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-user"></use></svg></div>
+                <div class="list-text">Sociologie<br><span style="font-size:10px;font-weight:500;color:#999;">Société, institutions, comportements</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Droit', 'https://concourscomplet.vercel.app/CD/indexdroit.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-scale-balanced"></use></svg></div>
+                <div class="list-text">Droit<br><span style="font-size:10px;font-weight:500;color:#999;">Notions juridiques et institutionnelles</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Philosophie', 'https://concourscomplet.vercel.app/CD/indexphilosophie.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-square-question"></use></svg></div>
+                <div class="list-text">Philosophie<br><span style="font-size:10px;font-weight:500;color:#999;">Raisonnement et culture philosophique</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
         </div>
     </div>
 
@@ -1203,7 +1233,9 @@ body { overflow-x:hidden; }
                 {n:'Accompagnement final', i:'fa-handshake-angle'}, {n:'Culture générale', i:'fa-globe'},
                 {n:'Français', i:'fa-language'}, {n:'Littérature', i:'fa-book'},
                 {n:'Mathématiques', i:'fa-calculator'}, {n:'SVT', i:'fa-microscope'},
-                {n:'Psychotechnique', i:'fa-brain'}, {n:'Chimie', i:'fa-flask'}, {n:'Physique', i:'fa-atom'}
+                {n:'Psychotechnique', i:'fa-brain'}, {n:'Chimie', i:'fa-flask'}, {n:'Physique', i:'fa-atom'},
+                {n:'Histoire/Géographie', i:'fa-earth-africa'}, {n:'Économie', i:'fa-coins'}, {n:'Sociologie', i:'fa-user'},
+                {n:'Droit', i:'fa-scale-balanced'}, {n:'Philosophie', i:'fa-square-question'}
             ];
             directItems.forEach(item => {
                 itemsHTML += `<div class="dropdown-item" onclick="alert('Ouverture de ${item.n}')">
@@ -1392,7 +1424,7 @@ body { overflow-x:hidden; }
     }
 
     function isDirectSub(name) {
-        const subs = ['Accompagnement final', 'Culture générale', 'Français', 'Littérature', 'Mathématiques', 'SVT', 'Psychotechnique', 'Physique/Chimie'];
+        const subs = ['Accompagnement final', 'Culture générale', 'Français', 'Littérature', 'Mathématiques', 'SVT', 'Psychotechnique', 'Physique/Chimie', 'Histoire/Géographie', 'Économie', 'Sociologie', 'Droit', 'Philosophie'];
         return subs.includes(name);
     }
     function isColSub(name) {
