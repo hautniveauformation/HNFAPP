@@ -377,13 +377,13 @@
         .download-tab span { overflow:hidden; text-overflow:ellipsis; }
         .download-tab.active { background:#fff0e9; color:#d65c2c; box-shadow:inset 0 0 0 1px #f1c8b5; }
         .download-tab i { font-size:19px; flex:0 0 auto; }
-        .downloads-list { display:grid; gap:12px; padding:4px 20px 18px; }
-        .download-card { display:flex; align-items:center; gap:12px; cursor:pointer; min-height:76px; padding:12px 12px 12px 14px; background:#fff; border:1px solid #eee7e2; border-radius:18px; box-shadow:0 4px 14px rgba(80,45,25,.06); }
+        .downloads-list { display:grid; gap:12px; padding:4px 20px 18px; box-sizing:border-box; }
+        .download-card { display:flex; align-items:center; gap:12px; cursor:pointer; min-height:76px; padding:12px 12px 12px 14px; background:#fff; border:1px solid #eee7e2; border-radius:18px; box-shadow:0 4px 14px rgba(80,45,25,.06); width:100%; box-sizing:border-box; }
         .download-card-icon { width:48px; height:48px; flex:0 0 48px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:#fff0e9; color:#d85b2d; font-size:22px; }
-        .download-card-info { min-width:0; flex:1; }
+        .download-card-info { min-width:0; flex:1; overflow:hidden; }
         .download-card-title { font-size:16px; font-weight:800; color:#302824; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .download-card-meta { margin-top:5px; font-size:11px; color:#8b817c; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .download-card-delete { width:40px; height:40px; border:0; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 40px; }
+        .download-card-meta { margin-top:5px; font-size:11px; color:#8b817c; white-space:normal; overflow-wrap:break-word; line-height:1.4; }
+        .download-card-delete { width:40px; height:40px; border:0; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 40px; box-sizing:border-box; }
                 .download-card-delete { background:#fff1f1; color:#c94b4b; border:1px solid #f2d4d4; }
         .download-card:active { transform:scale(.995); }
         .download-card-delete:active { transform:scale(.94); }
