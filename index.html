@@ -1,6 +1,47 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <script>
+    // ===== BLOCAGE ACCÈS HORS APPLICATION (document.referrer) =====
+    // Doit rester la toute première instruction de la page : elle s'exécute
+    // avant que quoi que ce soit d'autre ne s'affiche.
+    (function () {
+        var PACKAGE_REFERRER = 'android-app://app.vercel.hnfapp.twa';
+        var SECRET_TOKEN = 'hnf2026x'; // jeton de secours, voir explication fournie
+
+        var viaApp = document.referrer.indexOf(PACKAGE_REFERRER) === 0;
+
+        var hasSecretToken = false;
+        try {
+            var params = new URLSearchParams(window.location.search);
+            hasSecretToken = params.get('src') === SECRET_TOKEN;
+        } catch (e) {}
+
+        var dejaValide = false;
+        try { dejaValide = sessionStorage.getItem('viaApp') === 'true'; } catch (e) {}
+
+        if (viaApp || hasSecretToken) {
+            try { sessionStorage.setItem('viaApp', 'true'); } catch (e) {}
+        } else if (!dejaValide) {
+            document.open();
+            document.write(
+                '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">' +
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+                '<title>Application requise</title><style>' +
+                'body{margin:0;font-family:sans-serif;background:#0b4d3c;color:#fff;' +
+                'display:flex;align-items:center;justify-content:center;min-height:100vh;' +
+                'text-align:center;padding:20px;box-sizing:border-box;}' +
+                'div{max-width:340px;}h2{margin-bottom:10px;}p{opacity:.9;font-size:14px;}' +
+                '</style></head><body><div><h2>\uD83D\uDCF1 Application requise</h2>' +
+                '<p>Ce contenu n\'est accessible que depuis l\'application HNF. ' +
+                'Veuillez l\'ouvrir depuis l\'app installée sur votre téléphone.</p>' +
+                '</div></body></html>'
+            );
+            document.close();
+            window.stop();
+        }
+    })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Haut Niveau Formation - Application Complète</title>
