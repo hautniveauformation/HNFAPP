@@ -762,9 +762,15 @@ body { overflow-x:hidden; }
         <div class="list-container">
             <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez une rubrique :</p>
 
-            <div class="list-item collectivite-option" onclick="goTo('view-concours-directs', 'Concours Direct')">
-                <div class="list-icon"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></div>
-                <div class="list-text">Concours direct<br><span style="font-size:10px;font-weight:500;color:#999;">Tous les concours directs de l'État</span></div>
+            <div class="list-item collectivite-option" onclick="alert('Accompagnement final Pro - Bientôt disponible')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <div class="list-text">Accompagnement final Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final', 'https://concourscomplet.vercel.app/CD/AFD/indexAFD.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <div class="list-text">Accompagnement final Direct<br><span style="font-size:10px;font-weight:500;color:#999;">Concours direct</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
@@ -774,21 +780,33 @@ body { overflow-x:hidden; }
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
+            <div class="list-item collectivite-option" onclick="goTo('view-concours-directs', 'Concours Direct')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></div>
+                <div class="list-text">Concours direct<br><span style="font-size:10px;font-weight:500;color:#999;">Tous les concours directs de l'État</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
             <div class="list-item collectivite-option" onclick="openCollectivites()">
                 <div class="list-icon"><svg class="ico"><use href="#fa-building-columns"></use></svg></div>
                 <div class="list-text">Concours des collectivités territoriales<br><span style="font-size:10px;font-weight:500;color:#999;">Mairies et régions</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale', 'https://concourscomplet.vercel.app/CD/CGD/indexCGD.html')">
+            <div class="list-item collectivite-option" onclick="alert('Culture générale et actualité Pro - Bientôt disponible')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
-                <div class="list-text">Culture générale et actualité<br><span style="font-size:10px;font-weight:500;color:#999;">QCM, connaissances et actualités</span></div>
+                <div class="list-text">Culture générale et actualité Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final', 'https://concourscomplet.vercel.app/CD/AFD/indexAFD.html')">
-                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
-                <div class="list-text">Accompagnement final<br><span style="font-size:10px;font-weight:500;color:#999;">Préparation intensive et astuces</span></div>
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale', 'https://concourscomplet.vercel.app/CD/CGD/indexCGD.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
+                <div class="list-text">Culture générale et actualité Direct<br><span style="font-size:10px;font-weight:500;color:#999;">QCM, connaissances et actualités</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="openSpecialFormationWhatsApp()">
+                <div class="list-icon"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></div>
+                <div class="list-text">Formation spéciale et intensive<br><span style="font-size:10px;font-weight:500;color:#999;">Sur demande, via WhatsApp</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
         </div>
@@ -1317,7 +1335,7 @@ body { overflow-x:hidden; }
         <button type="button" class="nav-item active" onclick="goTo('view-home', 'Accueil')">
             <svg class="ico"><use href="#fa-house"></use></svg><span>Accueil</span>
         </button>
-        <button type="button" class="nav-item" onclick="goTo('view-tarifs', 'Concours')">
+        <button type="button" class="nav-item" onclick="goTo('view-concours-hub', 'Concours')">
             <svg class="ico"><use href="#fa-trophy"></use></svg><span>Concours</span>
         </button>
         <button type="button" class="nav-item" onclick="goTo('view-downloads', 'Téléchargements')">
@@ -1532,7 +1550,7 @@ body { overflow-x:hidden; }
             headerTitle.innerText = titleStr;
             
             if(viewId === 'view-profile') updateBottomNav(3);
-            else if(viewId === 'view-concours-hub' || viewId === 'view-categories' || viewId === 'view-concours-directs' || viewId === 'view-subcategories' || viewId === 'view-collectivites' || viewId === 'view-tarifs') updateBottomNav(1);
+            else if(viewId === 'view-concours-hub' || viewId === 'view-categories' || viewId === 'view-concours-directs' || viewId === 'view-subcategories' || viewId === 'view-collectivites') updateBottomNav(1);
             else updateBottomNav(-1);
         }
     }
