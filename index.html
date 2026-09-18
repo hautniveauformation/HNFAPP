@@ -521,6 +521,23 @@ body { overflow-x:hidden; }
         body, .view, .card, .list-item, .item-title, .item-desc { -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-touch-callout: none; }
         input, textarea { -webkit-user-select: text; -moz-user-select: text; user-select: text; -webkit-touch-callout: default; }
 </style>
+<!-- ===== FIREBASE (projet hnf-acces) : Authentication + Firestore ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDqBM3FPKDKoUfPQR_dj1uyg9XcusQt2U4",
+        authDomain: "hnf-acces.firebaseapp.com",
+        projectId: "hnf-acces",
+        storageBucket: "hnf-acces.firebasestorage.app",
+        messagingSenderId: "974692519107",
+        appId: "1:974692519107:web:e6605abf7fe44108fa6676"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const hnfAuth = firebase.auth();
+    const hnfDb = firebase.firestore();
+</script>
 </head>
 <body>
 <svg style="display:none" aria-hidden="true">
@@ -602,6 +619,8 @@ body { overflow-x:hidden; }
             <a href="#" class="side-nav-item" onclick="alert('Vos statistiques de QCM.')"><svg class="ico"><use href="#fa-chart-simple"></use></svg> Mes résultats</a>
             <div style="height: 1px; background: #eee; margin: 15px 0;"></div>
             <a href="#" class="side-nav-item" onclick="alert('Ouverture de WhatsApp...')"><svg class="ico" style="color: #25D366;"><use href="#fa-whatsapp"></use></svg> Assistance WhatsApp</a>
+            <div style="height: 1px; background: #eee; margin: 15px 0;"></div>
+            <a href="#" class="side-nav-item" id="logout-link" style="display:none;" onclick="toggleMenu(); processLogout();"><svg class="ico"><use href="#fa-xmark"></use></svg> Se déconnecter</a>
         </div>
     </div>
 
@@ -762,7 +781,7 @@ body { overflow-x:hidden; }
         <div class="list-container">
             <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez une rubrique :</p>
 
-            <div class="list-item collectivite-option" onclick="alert('Accompagnement final Pro - Bientôt disponible')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final Pro', '#')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
                 <div class="list-text">Accompagnement final Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
@@ -792,7 +811,7 @@ body { overflow-x:hidden; }
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="alert('Culture générale Pro - Bientôt disponible')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale Pro', '#')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
                 <div class="list-text">Culture générale Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
@@ -902,7 +921,7 @@ body { overflow-x:hidden; }
         <div class="list-container">
             <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez une rubrique :</p>
 
-            <div class="list-item collectivite-option" onclick="alert('Accompagnement final Pro - Bientôt disponible')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final Pro', '#')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
                 <div class="list-text">Accompagnement final Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
@@ -921,7 +940,7 @@ body { overflow-x:hidden; }
         <div class="list-container">
             <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez une rubrique :</p>
 
-            <div class="list-item collectivite-option" onclick="alert('Culture générale et actualité Pro - Bientôt disponible')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale Pro', '#')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
                 <div class="list-text">Culture générale Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
@@ -1000,9 +1019,9 @@ body { overflow-x:hidden; }
 
             <!-- Connexion -->
             <div id="form-login" class="auth-form">
-                <div class="form-group"><input type="tel" class="form-control" placeholder="Numéro WhatsApp"></div>
-                <div class="form-group"><input type="password" class="form-control" placeholder="Mot de passe"></div>
-                <button class="btn-primary" onclick="processLogin()">Se connecter</button>
+                <div class="form-group"><input type="tel" id="login-whatsapp" class="form-control" placeholder="Numéro WhatsApp"></div>
+                <div class="form-group"><input type="password" id="login-password" class="form-control" placeholder="Mot de passe"></div>
+                <button class="btn-primary" id="login-submit-btn" onclick="processLogin()">Se connecter</button>
             </div>
         </div>
     </div>
@@ -1406,6 +1425,21 @@ body { overflow-x:hidden; }
     let userPhone = '+226 70 00 00 00';
     let selectedPlanName = '';
     let selectedPlanPrice = '';
+    let currentClientDocId = null;
+
+    // Reconnexion automatique : si Firebase se souvient d'une session déjà
+    // ouverte (l'utilisateur n'a pas appuyé sur "Se déconnecter"), on recharge
+    // sa fiche Firestore sans lui redemander son mot de passe.
+    hnfAuth.onAuthStateChanged(function (user) {
+        if (user && !isLoggedIn) {
+            const docId = user.email.split('@')[0];
+            hnfDb.collection('clients').doc(docId).get().then(function (doc) {
+                if (doc.exists) {
+                    applyLoggedInState(docId, doc.data());
+                }
+            });
+        }
+    });
 
     window.onload = function() {
         // Init catégories pro
@@ -1620,12 +1654,12 @@ body { overflow-x:hidden; }
 
         // Rubriques communes ajoutées à la fin de chaque filière du Concours Professionnel.
         subContainer.innerHTML += `
-            <div class="list-item" onclick="alert('Accompagnement final Pro - Bientôt disponible')">
+            <div class="list-item" onclick="checkAccess('Accompagnement final Pro', '#')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
                 <div class="list-text">Accompagnement final Pro</div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
-            <div class="list-item" onclick="alert('Culture générale Pro - Bientôt disponible')">
+            <div class="list-item" onclick="checkAccess('Culture générale Pro', '#')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
                 <div class="list-text">Culture générale Pro</div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
@@ -1635,29 +1669,86 @@ body { overflow-x:hidden; }
         goTo('view-subcategories', title);
     }
 
-    function checkAccess(itemName, itemUrl) {
-        // Pour les concours globaux, si le titre principal est dans les permissions, on donne accès
-        let hasAccess = userPermissions.includes(itemName) || 
-                        (userPermissions.includes('Concours Direct') && isDirectSub(itemName)) ||
-                        (userPermissions.includes('Collectivités') && isColSub(itemName));
+    // ===== OUTILS FIREBASE (numéro WhatsApp <-> pseudo-email, identifiant d'appareil) =====
 
-        if (!isLoggedIn) {
+    // Nettoie un numéro WhatsApp (retire espaces, +, tirets) pour en faire
+    // un identifiant stable : utilisé comme ID de document Firestore et
+    // comme base du pseudo-email Firebase Authentication.
+    function cleanWhatsapp(raw) {
+        return (raw || '').replace(/[^0-9]/g, '');
+    }
+    function whatsappToEmail(raw) {
+        return cleanWhatsapp(raw) + '@hnf.app';
+    }
+
+    // Identifiant unique de cet appareil/navigateur : généré une seule fois
+    // puis conservé dans localStorage (survit à la fermeture de l'appli).
+    function getDeviceId() {
+        let id = localStorage.getItem('hnf_device_id');
+        if (!id) {
+            id = 'dev-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('hnf_device_id', id);
+        }
+        return id;
+    }
+
+    // Vérification EN DIRECT à chaque ouverture de contenu : relit la fiche
+    // Firestore du client (actif, permissions, deviceId) plutôt que de se fier
+    // uniquement aux données déjà chargées en mémoire, pour éviter tout contournement.
+    function checkAccess(itemName, itemUrl) {
+        if (!isLoggedIn || !currentClientDocId) {
             alert("🔒 ACCÈS REFUSÉ : Connectez-vous pour accéder à : " + itemName);
             goTo('view-auth', 'Connexion requise');
-        } else if (!hasAccess) {
-            goTo('view-profile', 'Activation requise');
-            setTimeout(() => { document.getElementById('payment-modal').classList.add('open'); }, 220);
-        } else {
-            if (itemUrl && itemUrl !== '#') {
+            return;
+        }
+
+        hnfDb.collection('clients').doc(currentClientDocId).get().then(function (doc) {
+            if (!doc.exists) {
+                alert("Compte introuvable. Merci de contacter l'assistance WhatsApp.");
+                return;
+            }
+            const dataClient = doc.data();
+
+            // Verrou un seul appareil : si l'appareil enregistré sur Firestore
+            // ne correspond plus à celui-ci, on déconnecte automatiquement.
+            if (dataClient.deviceId && dataClient.deviceId !== getDeviceId()) {
+                alert("Ce compte est utilisé sur un autre appareil.");
+                processLogout();
+                return;
+            }
+
+            if (!dataClient.actif) {
+                goTo('view-profile', 'Activation requise');
+                setTimeout(() => { document.getElementById('payment-modal').classList.add('open'); }, 220);
+                return;
+            }
+
+            const permissions = dataClient.permissions || [];
+            let hasAccess = permissions.includes(itemName) ||
+                            (permissions.includes('Concours Direct') && isDirectSub(itemName)) ||
+                            (permissions.includes('Collectivités') && isColSub(itemName));
+
+            userPermissions = permissions; // met à jour l'affichage local (Mes accès débloqués)
+            renderUnlockedItems();
+
+            if (!hasAccess) {
+                goTo('view-profile', 'Activation requise');
+                setTimeout(() => { document.getElementById('payment-modal').classList.add('open'); }, 220);
+            } else if (itemUrl && itemUrl !== '#') {
                 openCollectiviteLink(itemName, itemUrl);
             } else {
                 alert("✅ ACCÈS AUTORISÉ ! \nOuverture de la section : " + itemName);
             }
-        }
+        }).catch(function (err) {
+            alert("Erreur de connexion au serveur. Vérifiez votre connexion internet et réessayez.");
+        });
     }
 
     function isDirectSub(name) {
-        const subs = ['Accompagnement final', 'Culture générale', 'Français', 'Littérature', 'Mathématiques', 'SVT', 'Psychotechnique', 'Physique/Chimie', 'Histoire/Géographie', 'Économie', 'Sociologie', 'Droit', 'Philosophie'];
+        // Accompagnement final et Culture générale (Direct) sont retirés de cette liste :
+        // ils ne doivent plus être débloqués automatiquement par le bloc "Concours Direct",
+        // mais activés séparément (permissions 'Accompagnement final' et 'Culture générale').
+        const subs = ['Français', 'Littérature', 'Mathématiques', 'SVT', 'Psychotechnique', 'Physique/Chimie', 'Histoire/Géographie', 'Économie', 'Sociologie', 'Droit', 'Philosophie'];
         return subs.includes(name);
     }
     function isColSub(name) {
@@ -1675,24 +1766,70 @@ body { overflow-x:hidden; }
     }
 
     function processLogin() {
-        isLoggedIn = true;
-        document.getElementById('home-profile-icon').classList.add('logged-in');
-        document.getElementById('menu-name').innerText = "Amadou Barry";
-        document.getElementById('menu-phone').innerText = "+226 70 00 00 00";
-        
-        // --- SIMULATION DES PERMISSIONS ---
-        // Active le concours direct en entier
-        userPermissions.push("Concours Direct"); 
-        
-        // Active uniquement Impôts pour le pro
-        userPermissions.push("Impôts"); 
-        
-        // Active la culture générale
-        userPermissions.push("Culture Générale"); 
-        
-        renderUnlockedItems(); // Met à jour le défilement visuel
+        const whatsappRaw = document.getElementById('login-whatsapp').value.trim();
+        const password = document.getElementById('login-password').value;
+        const btn = document.getElementById('login-submit-btn');
 
-        alert("✅ Inscription/Connexion réussie !");
+        if (!whatsappRaw || !password) {
+            alert("Merci de renseigner votre numéro WhatsApp et votre mot de passe.");
+            return;
+        }
+
+        const email = whatsappToEmail(whatsappRaw);
+        btn.disabled = true;
+        btn.innerText = "Connexion...";
+
+        hnfAuth.signInWithEmailAndPassword(email, password).then(function (cred) {
+            const docId = cleanWhatsapp(whatsappRaw);
+            return hnfDb.collection('clients').doc(docId).get().then(function (doc) {
+                if (!doc.exists) {
+                    throw new Error("Fiche client introuvable.");
+                }
+                const dataClient = doc.data();
+                applyLoggedInState(docId, dataClient);
+
+                // Enregistre cet appareil comme "appareil autorisé" — un éventuel
+                // autre appareil déjà connecté sera déconnecté à sa prochaine action.
+                return hnfDb.collection('clients').doc(docId).update({ deviceId: getDeviceId() });
+            });
+        }).then(function () {
+            btn.disabled = false;
+            btn.innerText = "Se connecter";
+            goTo('view-home', 'Accueil');
+        }).catch(function (err) {
+            btn.disabled = false;
+            btn.innerText = "Se connecter";
+            alert("Connexion impossible : numéro WhatsApp ou mot de passe incorrect.");
+        });
+    }
+
+    // Applique à l'interface l'état "connecté" une fois les données du client
+    // récupérées depuis Firestore (utilisé à la connexion ET au démarrage de l'app).
+    function applyLoggedInState(docId, dataClient) {
+        isLoggedIn = true;
+        currentClientDocId = docId;
+        userPhone = dataClient.whatsapp || docId;
+        userName = dataClient.nom || userPhone;
+        userPermissions = dataClient.permissions || [];
+
+        document.getElementById('home-profile-icon').classList.add('logged-in');
+        document.getElementById('logout-link').style.display = '';
+        document.getElementById('menu-name').innerText = userName;
+        document.getElementById('menu-phone').innerText = userPhone;
+
+        renderUnlockedItems();
+    }
+
+    function processLogout() {
+        hnfAuth.signOut();
+        isLoggedIn = false;
+        currentClientDocId = null;
+        userPermissions = [];
+        document.getElementById('home-profile-icon').classList.remove('logged-in');
+        document.getElementById('logout-link').style.display = 'none';
+        document.getElementById('menu-name').innerText = "Non Connecté";
+        document.getElementById('menu-phone').innerText = "Identifiez-vous";
+        renderUnlockedItems();
         goTo('view-home', 'Accueil');
     }
 
@@ -1701,24 +1838,48 @@ body { overflow-x:hidden; }
     function processSignup() {
         const nom = document.getElementById('signup-nom').value.trim();
         const prenom = document.getElementById('signup-prenom').value.trim();
+        const ville = document.getElementById('signup-ville').value.trim();
         const whatsapp = document.getElementById('signup-whatsapp').value.trim();
+        const password = document.getElementById('signup-password').value;
 
-        if (!nom || !prenom || !whatsapp) {
-            alert("Merci de renseigner au moins le nom, le prénom et le numéro WhatsApp.");
+        if (!nom || !prenom || !whatsapp || !password) {
+            alert("Merci de renseigner au moins le nom, le prénom, le numéro WhatsApp et un mot de passe.");
+            return;
+        }
+        if (password.length < 6) {
+            alert("Le mot de passe doit contenir au moins 6 caractères.");
             return;
         }
 
-        userName = (nom + ' ' + prenom).trim();
-        userPhone = whatsapp;
-        isLoggedIn = true;
+        const docId = cleanWhatsapp(whatsapp);
+        const email = whatsappToEmail(whatsapp);
+        const fullName = (nom + ' ' + prenom).trim();
 
-        document.getElementById('home-profile-icon').classList.add('logged-in');
-        document.getElementById('menu-name').innerText = userName;
-        document.getElementById('menu-phone').innerText = userPhone;
-        document.getElementById('profile-name').innerText = userName;
-        document.getElementById('profile-phone').innerText = userPhone;
-
-        goTo('view-profile', 'Mon Profil');
+        hnfAuth.createUserWithEmailAndPassword(email, password).then(function (cred) {
+            return hnfDb.collection('clients').doc(docId).set({
+                nom: fullName,
+                whatsapp: whatsapp,
+                ville: ville,
+                uid: cred.user.uid,
+                actif: false,
+                permissions: [],
+                deviceId: getDeviceId(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }).then(function () {
+            applyLoggedInState(docId, { nom: fullName, whatsapp: whatsapp, permissions: [] });
+            document.getElementById('profile-name').innerText = fullName;
+            document.getElementById('profile-phone').innerText = whatsapp;
+            goTo('view-profile', 'Mon Profil');
+        }).catch(function (err) {
+            if (err.code === 'auth/email-already-in-use') {
+                alert("Un compte existe déjà avec ce numéro WhatsApp. Utilisez plutôt l'onglet Connexion.");
+            } else if (err.code === 'auth/weak-password') {
+                alert("Mot de passe trop faible : utilisez au moins 6 caractères.");
+            } else {
+                alert("Inscription impossible pour le moment. Vérifiez votre connexion internet et réessayez.");
+            }
+        });
     }
 
     // Mémorise la formule choisie dans le tableau d'abonnements puis
