@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panneau Admin HNF</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<style>
+    :root{
+        --primary:#0b4d3c;
+        --primary-2:#0b8063;
+        --yellow:#f1c40f;
+        --bg-app:#ffffff;
+        --bg-page:#f4f5f6;
+        --text-dark:#1a1a1a;
+        --text-gray:#666666;
+        --border:#e7e9ea;
+        --green-dot:#1fae5f;
+        --gray-dot:#c9cccd;
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:'Poppins',sans-serif;background:var(--bg-page);display:flex;justify-content:center;color:var(--text-dark);}
+    .app{width:100%;max-width:460px;background:var(--bg-app);min-height:100vh;box-shadow:0 0 30px rgba(0,0,0,.12);}
+
+    /* HEADER */
+    .header{background:var(--primary);color:#fff;padding:18px 20px 20px;display:flex;align-items:center;gap:12px;}
+    .badge-hnf{background:var(--yellow);color:var(--primary);font-weight:800;font-size:13px;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .header-title{font-weight:700;font-size:17px;line-height:1.2;}
+    .header-sub{font-size:12px;opacity:.85;margin-top:2px;}
+    .header-tag{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);font-size:11px;padding:4px 10px;border-radius:20px;white-space:nowrap;align-self:flex-start;}
+
+    /* LISTE CLIENTS */
+    .view{display:none;padding:16px 16px 40px;}
+    .view.active{display:block;}
+    .search-wrap{position:relative;margin-bottom:6px;}
+    .search-wrap input{width:100%;padding:13px 16px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:14px;background:#fafafa;}
+    .search-hint{font-size:12px;color:#999;margin:6px 2px 14px;}
+
+    .client-row{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;}
+    .client-row:hover{background:#fafafa;}
+    .avatar{width:44px;height:44px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .client-info{flex-grow:1;min-width:0;}
+    .client-name{font-weight:700;font-size:15px;}
+    .client-meta{font-size:12.5px;color:var(--text-gray);margin-top:2px;}
+    .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+    .status-dot.active{background:var(--green-dot);}
+    .status-dot.inactive{background:var(--gray-dot);}
+
+    /* FICHE CLIENT */
+    .back-link{color:var(--primary-2);font-weight:600;font-size:14px;cursor:pointer;display:inline-block;margin-bottom:16px;}
+    .client-header{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+    .avatar-lg{width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .client-name-lg{font-weight:700;font-size:19px;}
+    .client-sub{font-size:13px;color:var(--text-gray);margin-top:2px;}
+    .client-status-row{font-size:13px;color:var(--text-gray);margin:10px 0 22px;display:flex;align-items:center;gap:6px;}
+    .client-status-row .status-dot{margin-left:2px;}
+    .status-text-active{color:var(--green-dot);font-weight:600;}
+    .status-text-inactive{color:#999;font-weight:600;}
+
+    .section-title{font-weight:700;font-size:14.5px;margin:26px 0 4px;}
+    .section-hint{font-size:12.5px;color:var(--text-gray);margin-bottom:12px;}
+
+    .bloc-card{border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid var(--border);}
+    .toggle-row:last-child{border-bottom:none;}
+    .toggle-row .label{font-size:14.5px;font-weight:600;}
+    .toggle-row .label small{display:block;font-weight:500;font-size:11px;color:#999;margin-top:2px;}
+
+    .group{border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;}
+    .group-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#f7f8f8;font-weight:700;font-size:13.5px;}
+    .group-head .count{font-weight:600;color:#999;font-size:12.5px;}
+
+    /* SWITCH */
+    .switch{position:relative;width:46px;height:26px;flex-shrink:0;}
+    .switch input{opacity:0;width:0;height:0;}
+    .slider{position:absolute;cursor:pointer;inset:0;background:#d8dbdc;border-radius:26px;transition:.2s;}
+    .slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+    input:checked + .slider{background:var(--primary-2);}
+    input:checked + .slider:before{transform:translateX(20px);}
+
+    .footer-note{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:#f7f8f8;border-radius:14px;padding:16px;}
+    .footer-note p{font-size:12px;color:var(--text-gray);margin:0;}
+    .btn-save{background:var(--primary);color:#fff;border:none;padding:12px 20px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;}
+    .btn-save:active{background:var(--primary-2);}
+
+    /* CONNEXION ADMIN */
+    .login-wrap{padding:60px 26px;}
+    .login-wrap h2{font-size:19px;margin-bottom:6px;}
+    .login-wrap p{font-size:13px;color:var(--text-gray);margin-bottom:26px;}
+    .login-wrap input{width:100%;padding:13px 16px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:14px;background:#fafafa;margin-bottom:12px;}
+    .login-wrap button{width:100%;background:var(--primary);color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;}
+    .login-error{color:#c0392b;font-size:13px;margin:-4px 0 12px;display:none;}
+    .logout-link{display:block;text-align:center;color:var(--text-gray);font-size:12.5px;margin-top:18px;cursor:pointer;}
+    .loading-hint{text-align:center;color:var(--text-gray);font-size:13px;padding:30px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+    <div class="header">
+        <div class="badge-hnf">HNF</div>
+        <div>
+            <div class="header-title">Panneau Admin</div>
+            <div class="header-sub">Haut Niveau Formation</div>
+        </div>
+        <div class="header-tag" id="header-tag">Connexion...</div>
+    </div>
+
+    <!-- VUE CONNEXION ADMIN -->
+    <div id="view-login" class="view active">
+        <div class="login-wrap">
+            <h2>Connexion admin</h2>
+            <p>Réservé au compte administrateur.</p>
+            <input id="login-email" type="email" placeholder="E-mail admin">
+            <input id="login-pass" type="password" placeholder="Mot de passe">
+            <div class="login-error" id="login-error"></div>
+            <button onclick="adminLogin()" id="login-btn">Se connecter</button>
+        </div>
+    </div>
+
+    <!-- VUE LISTE -->
+    <div id="view-list" class="view">
+        <div class="search-wrap">
+            <input id="search-input" type="text" placeholder="Rechercher par numéro WhatsApp ou nom..." oninput="renderList()">
+        </div>
+        <div class="search-hint">Tapez un numéro ou un nom pour retrouver un client.</div>
+        <div id="client-list"></div>
+        <div class="logout-link" onclick="adminLogout()">Se déconnecter</div>
+    </div>
+
+    <!-- VUE FICHE CLIENT -->
+    <div id="view-detail" class="view">
+        <div class="back-link" onclick="goToList()">&lsaquo; Retour à la liste</div>
+
+        <div class="client-header">
+            <div class="avatar-lg" id="d-avatar"></div>
+            <div>
+                <div class="client-name-lg" id="d-name"></div>
+                <div class="client-sub" id="d-phone-city"></div>
+            </div>
+        </div>
+        <div class="client-status-row">
+            <span id="d-date"></span>
+        </div>
+        <div class="bloc-card" style="margin-bottom:22px;">
+            <div class="toggle-row">
+                <div class="label">Compte actif<small>Doit être activé pour que le candidat accède à quoi que ce soit</small></div>
+                <label class="switch">
+                    <input type="checkbox" id="d-actif-toggle" onchange="onToggleActif(this)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="section-title">Accès en bloc</div>
+        <div class="section-hint">Chaque rubrique se débloque indépendamment des autres.</div>
+        <div class="bloc-card" id="bloc-card"></div>
+
+        <div class="section-title">Accès par filière — Concours Professionnel</div>
+        <div class="section-hint">Chaque paiement débloque une seule filière, pas tout le bloc.</div>
+        <div id="pro-groups"></div>
+
+        <div class="section-title">Accès par filière — Collectivités Territoriales</div>
+        <div class="group" id="ct-group"></div>
+
+        <div class="footer-note">
+            <p id="save-hint">Les modifications sont locales tant que vous n'avez pas appuyé sur Enregistrer.</p>
+            <button class="btn-save" onclick="saveClient()" id="save-btn">Enregistrer</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ===================== DONNÉES =====================
+    // Rubriques en accès direct / bloc unique. Les clés (à gauche) correspondent
+    // exactement aux noms de permission déjà utilisés dans index.html
+    // (checkAccess('Concours Direct', ...), checkAccess('Accompagnement final', ...),
+    // checkAccess('Culture générale', ...)). "Accompagnement final Pro" et
+    // "Culture générale Pro" sont des noms proposés pour le jour où ces contenus
+    // Pro seront branchés à checkAccess() côté index.html.
+    const BLOC_ITEMS = [
+        { key: 'Concours Direct', label: 'Concours Direct', hint: 'Débloque toutes les matières du concours direct' },
+        { key: 'Accompagnement final', label: 'Accompagnement Final Direct' },
+        { key: 'Accompagnement final Pro', label: 'Accompagnement Final Pro' },
+        { key: 'Culture générale', label: 'Culture Générale Direct' },
+        { key: 'Culture générale Pro', label: 'Culture Générale Pro' }
+    ];
+
+    // Filières du Concours Professionnel — reprend exactement le tableau
+    // "data" de index.html (mêmes intitulés de matières).
+    const PRO_GROUPS = [
+        { title: 'I - Admin. Économique et Financière', subs: ['Impôts','Finances','Trésor','Douanes','Affaires Économiques','Statistiques'] },
+        { title: 'II - Communication, Archives et Culture', subs: ['Communication','Culture - Tourisme','Archivistique - Bibliothéconomie'] },
+        { title: 'III - Eaux, Forêts, Agri et Environnement', subs: ['Eaux et Forêts','Agriculture','Environnement'] },
+        { title: 'IV - Éducation, Formation et Emploi', subs: ['Inspecteurs Enseignement Primaire','AASU-CASU','AISU-CISU'] },
+        { title: 'V - Gouvernance Administrative', subs: ['Administration du Territoire','Administration du Travail','GRH','Affaires Étrangères'] },
+        { title: 'VI - Infrastructures', subs: ['Infrastructure-Assainissement'] },
+        { title: 'VII - Droits Humains et Promotion', subs: ['Droit Humain','Éducation Sociale','Promotion du Genre'] },
+        { title: 'VIII - Santé Humaine et Animale', subs: ['Gestionnaires Services Santé','Santé Animale','Santé Humaine'] },
+        { title: 'IX - Garde de Sécurité Pénitentiaire', subs: ['GSP'] }
+    ];
+
+    const CT_SUBS = ['Administration Générale', 'Services financiers'];
+
+    const ADMIN_UID = "10wmeICVoxVfl8xxmwyQL2HQfd23";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDqBM3FPKDKoUfPQR_dj1uyg9XcusQt2U4",
+        authDomain: "hnf-acces.firebaseapp.com",
+        projectId: "hnf-acces",
+        storageBucket: "hnf-acces.firebasestorage.app",
+        messagingSenderId: "974692519107",
+        appId: "1:974692519107:web:e6605abf7fe44108fa6676"
+    };
+    let hnfAuth = null, hnfDb = null, firebaseInitError = null;
+    try {
+        firebase.initializeApp(firebaseConfig);
+        hnfAuth = firebase.auth();
+        hnfDb = firebase.firestore();
+    } catch (e) {
+        firebaseInitError = e;
+    }
+
+    let CLIENTS = [];
+    let currentClientId = null;
+    let workingActif = false;
+    let workingPerms = [];
+    let unsubscribeClients = null;
+    let dirty = false; // true = modifications non enregistrées sur la fiche ouverte
+
+    function switchView(viewId){
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+    }
+
+    // ===================== CONNEXION ADMIN =====================
+    let loginTimer = null;
+
+    function showLoginError(msg){
+        const errBox = document.getElementById('login-error');
+        errBox.textContent = msg;
+        errBox.style.display = 'block';
+    }
+
+    function resetLoginBtn(){
+        const btn = document.getElementById('login-btn');
+        btn.disabled = false;
+        btn.textContent = 'Se connecter';
+        if (loginTimer) { clearTimeout(loginTimer); loginTimer = null; }
+    }
+
+    function adminLogin(){
+        const email = document.getElementById('login-email').value.trim();
+        const pass = document.getElementById('login-pass').value;
+        document.getElementById('login-error').style.display = 'none';
+
+        if (!hnfAuth) {
+            showLoginError("Firebase n'a pas pu se charger sur ce navigateur (bloqueur de publicités, mode économie de données ou connexion coupée). Détail : " + (firebaseInitError ? firebaseInitError.message : "bibliothèque introuvable"));
+            return;
+        }
+        if (!email || !pass) {
+            showLoginError("Renseignez l'e-mail et le mot de passe.");
+            return;
+        }
+
+        const btn = document.getElementById('login-btn');
+        btn.disabled = true; btn.textContent = 'Connexion...';
+        // Filet de sécurité : si rien ne se passe en 20 s, on débloque le bouton.
+        loginTimer = setTimeout(function(){
+            resetLoginBtn();
+            showLoginError("La connexion prend trop de temps. Vérifiez votre internet puis réessayez.");
+        }, 20000);
+
+        // Session gardée seulement le temps de l'onglet ; si le navigateur refuse, on essaie sans mémoire.
+        hnfAuth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+            .catch(function(){ return hnfAuth.setPersistence(firebase.auth.Auth.Persistence.NONE); })
+            .catch(function(){ /* on tente quand même la connexion */ })
+            .then(function(){ return hnfAuth.signInWithEmailAndPassword(email, pass); })
+            .catch(function(err){
+                resetLoginBtn();
+                const code = (err && err.code) || 'inconnu';
+                let msg;
+                if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-email') {
+                    msg = "Connexion impossible : e-mail ou mot de passe incorrect.";
+                } else if (code === 'auth/network-request-failed') {
+                    msg = "Pas de connexion à Internet, ou le navigateur bloque Firebase.";
+                } else if (code === 'auth/too-many-requests') {
+                    msg = "Trop d'essais. Attendez quelques minutes puis réessayez.";
+                } else {
+                    msg = "Connexion impossible.";
+                }
+                showLoginError(msg + " (code : " + code + ")");
+            });
+    }
+
+    function adminLogout(){
+        if (unsubscribeClients) { unsubscribeClients(); unsubscribeClients = null; }
+        if (hnfAuth) hnfAuth.signOut();
+    }
+
+    if (hnfAuth) {
+        hnfAuth.onAuthStateChanged(function(user){
+            if (user && user.uid === ADMIN_UID) {
+                resetLoginBtn();
+                document.getElementById('login-pass').value = '';
+                document.getElementById('header-tag').textContent = 'Connecté';
+                switchView('view-list');
+                startClientsListener();
+            } else {
+                if (user && user.uid !== ADMIN_UID) {
+                    // Un compte candidat ne doit jamais atterrir ici.
+                    hnfAuth.signOut();
+                    showLoginError("Ce compte n'est pas le compte administrateur.");
+                }
+                resetLoginBtn();
+                document.getElementById('header-tag').textContent = 'Connexion requise';
+                if (unsubscribeClients) { unsubscribeClients(); unsubscribeClients = null; }
+                CLIENTS = [];
+                currentClientId = null;
+                switchView('view-login');
+            }
+        });
+    } else {
+        document.getElementById('header-tag').textContent = 'Erreur';
+        showLoginError("Firebase n'a pas pu se charger sur ce navigateur (bloqueur de publicités, mode économie de données ou connexion coupée).");
+    }
+
+    // ===================== CHARGEMENT EN DIRECT =====================
+    function startClientsListener(){
+        document.getElementById('client-list').innerHTML = '<div class="loading-hint">Chargement des candidats...</div>';
+        unsubscribeClients = hnfDb.collection('clients').onSnapshot(function(snapshot){
+            CLIENTS = snapshot.docs.map(function(doc){
+                const d = doc.data();
+                let dateStr = '';
+                if (d.createdAt && d.createdAt.toDate) {
+                    dateStr = d.createdAt.toDate().toLocaleDateString('fr-FR');
+                }
+                return {
+                    id: doc.id,
+                    name: d.nom || doc.id,
+                    phone: d.whatsapp || doc.id,
+                    city: d.ville || '',
+                    date: dateStr,
+                    active: !!d.actif,
+                    permissions: d.permissions || []
+                };
+            });
+            renderList();
+            // Si on est en train de regarder la fiche d'un client, on la rafraîchit
+            // (utile si son statut a changé ailleurs, ex. autre onglet admin ouvert).
+            // On ne le fait QUE s'il n'y a pas de modification en cours, sinon on l'écraserait.
+            if (currentClientId && !dirty && document.getElementById('view-detail').classList.contains('active')) {
+                openClient(currentClientId, true);
+            }
+        }, function(err){
+            document.getElementById('client-list').innerHTML = '<div class="loading-hint">Erreur de chargement. Vérifiez votre connexion internet.</div>';
+        });
+    }
+
+    function esc(str){
+        return String(str == null ? '' : str).replace(/[&<>"']/g, function(ch){
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+        });
+    }
+
+    function initials(name){
+        return (name || '?').split(' ').filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('');
+    }
+
+    // ===================== VUE LISTE =====================
+    function renderList(){
+        const q = (document.getElementById('search-input').value || '').toLowerCase();
+        const container = document.getElementById('client-list');
+        const filtered = CLIENTS.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q));
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="loading-hint">Aucun candidat trouvé.</div>';
+            return;
+        }
+        container.innerHTML = '';
+        filtered.forEach(c => {
+            const row = document.createElement('div');
+            row.className = 'client-row';
+            row.onclick = () => openClient(c.id);
+            row.innerHTML = `
+                <div class="avatar">${initials(c.name)}</div>
+                <div class="client-info">
+                    <div class="client-name">${esc(c.name)}</div>
+                    <div class="client-meta">${esc(c.phone)}${c.city ? ' · ' + esc(c.city) : ''}</div>
+                </div>
+                <div class="status-dot ${c.active ? 'active' : 'inactive'}"></div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function goToList(){
+        document.getElementById('view-detail').classList.remove('active');
+        document.getElementById('view-list').classList.add('active');
+        currentClientId = null;
+    }
+
+    // ===================== VUE FICHE =====================
+    function openClient(id, silentRefresh){
+        currentClientId = id;
+        const client = CLIENTS.find(c => c.id === id);
+        if (!client) return;
+        // On (re)charge l'état de travail depuis Firestore : uniquement ici, jamais lors d'un simple clic sur un interrupteur.
+        workingActif = client.active;
+        workingPerms = client.permissions.slice();
+        dirty = false;
+        renderClient(client);
+
+        if (!silentRefresh) {
+            document.getElementById('view-list').classList.remove('active');
+            document.getElementById('view-detail').classList.add('active');
+            document.getElementById('save-hint').textContent = "Les modifications sont locales tant que vous n'avez pas appuyé sur Enregistrer.";
+        }
+    }
+
+    // Dessine la fiche à partir de l'état de travail (workingActif / workingPerms).
+    function renderClient(client){
+        const perms = workingPerms;
+
+        document.getElementById('d-avatar').textContent = initials(client.name);
+        document.getElementById('d-name').textContent = client.name;
+        document.getElementById('d-phone-city').textContent = `${client.phone}${client.city ? '   ' + client.city : ''}`;
+        document.getElementById('d-date').textContent = client.date ? `Inscrit le ${client.date}` : '';
+        document.getElementById('d-actif-toggle').checked = workingActif;
+
+        // Accès en bloc
+        const blocCard = document.getElementById('bloc-card');
+        blocCard.innerHTML = BLOC_ITEMS.map(item => `
+            <div class="toggle-row">
+                <div class="label">${item.label}${item.hint ? `<small>${item.hint}</small>` : ''}</div>
+                <label class="switch">
+                    <input type="checkbox" data-perm="${item.key}" ${perms.includes(item.key) ? 'checked' : ''} onchange="onToggle(this)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        `).join('');
+
+        // Filières Concours Professionnel
+        const proContainer = document.getElementById('pro-groups');
+        proContainer.innerHTML = PRO_GROUPS.map(group => {
+            const unlocked = group.subs.filter(s => perms.includes(s)).length;
+            const rows = group.subs.map(sub => `
+                <div class="toggle-row">
+                    <div class="label">${sub}</div>
+                    <label class="switch">
+                        <input type="checkbox" data-perm="${sub}" ${perms.includes(sub) ? 'checked' : ''} onchange="onToggle(this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `).join('');
+            return `
+                <div class="group">
+                    <div class="group-head"><span>${group.title}</span><span class="count">${unlocked}/${group.subs.length}</span></div>
+                    ${rows}
+                </div>
+            `;
+        }).join('');
+
+        // Collectivités territoriales
+        const ctUnlocked = CT_SUBS.filter(s => perms.includes(s)).length;
+        document.getElementById('ct-group').innerHTML = `
+            <div class="group-head"><span>Collectivités Territoriales</span><span class="count">${ctUnlocked}/${CT_SUBS.length}</span></div>
+            ${CT_SUBS.map(sub => `
+                <div class="toggle-row">
+                    <div class="label">${sub}</div>
+                    <label class="switch">
+                        <input type="checkbox" data-perm="${sub}" ${perms.includes(sub) ? 'checked' : ''} onchange="onToggle(this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `).join('')}
+        `;
+
+    }
+
+    function markDirty(){
+        dirty = true;
+        document.getElementById('save-hint').textContent = "⚠️ Modifications non enregistrées — appuyez sur Enregistrer.";
+    }
+
+    function onToggleActif(input){
+        workingActif = input.checked;
+        markDirty();
+    }
+
+    function onToggle(input){
+        const name = input.getAttribute('data-perm');
+        if (input.checked && !workingPerms.includes(name)) workingPerms.push(name);
+        if (!input.checked) workingPerms = workingPerms.filter(p => p !== name);
+        markDirty();
+        // Met à jour uniquement les compteurs "x/y" ; on ne redessine pas la fiche (sinon on perdrait l'état).
+        document.querySelectorAll('.group').forEach(function(g){
+            const total = g.querySelectorAll('input[data-perm]').length;
+            const on = g.querySelectorAll('input[data-perm]:checked').length;
+            const c = g.querySelector('.count');
+            if (c) c.textContent = on + '/' + total;
+        });
+    }
+
+    function saveClient(){
+        const client = CLIENTS.find(c => c.id === currentClientId);
+        if (!client) return;
+        const btn = document.getElementById('save-btn');
+        btn.disabled = true; btn.textContent = 'Enregistrement...';
+        hnfDb.collection('clients').doc(currentClientId).update({
+            actif: workingActif,
+            permissions: workingPerms
+        }).then(function(){
+            btn.disabled = false; btn.textContent = 'Enregistrer';
+            dirty = false;
+            document.getElementById('save-hint').textContent = '✅ Enregistré — le candidat verra la mise à jour à sa prochaine action.';
+        }).catch(function(err){
+            btn.disabled = false; btn.textContent = 'Enregistrer';
+            document.getElementById('save-hint').textContent = "❌ Échec de l'enregistrement (" + ((err && err.code) || 'erreur inconnue') + "). Vos modifications sont toujours à l'écran : réessayez.";
+        });
+    }
+</script>
+</body>
+</html>
