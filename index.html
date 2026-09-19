@@ -251,6 +251,7 @@
         .avatar-large { width: 92px; height: 92px; background: var(--card-green-bg); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 15px auto; box-shadow: 0 10px 24px rgba(7,91,70,0.12); border: 5px solid white; }
         .badge { display: inline-block; padding: 6px 15px; border-radius: 20px; font-size: 14px; font-weight: 700; margin-top: 12px; }
         .badge-inactive { background: #fff1f0; color: #e74c3c; border: 1px solid #ffd9d6; }
+        .badge-active { background: #eaf8f0; color: #1a9d55; border: 1px solid #c6ebd5; }
         
         .payment-section { margin: 0 15px 20px; padding: 18px; border-radius: 22px; background: linear-gradient(145deg, #fffdf6, #fff9e9); border: 1px solid #f2e5b8; box-shadow: 0 10px 25px rgba(104,77,13,0.08); }
         .payment-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -1070,9 +1071,9 @@ body { overflow-x:hidden; }
     <div id="view-profile" class="view">
         <div class="profile-card">
             <div class="avatar-large"><svg class="ico"><use href="#fa-user"></use></svg></div>
-            <h2 id="profile-name" style="margin:0; font-size: 18px; font-weight: 700; color: var(--text-dark);">Amadou Barry</h2>
-            <p id="profile-phone" style="color:var(--text-gray); margin:5px 0 0 0; font-size: 13px;">+226 70 00 00 00</p>
-            <div class="badge badge-inactive">Statut : Compte Inactif</div>
+            <h2 id="profile-name" style="margin:0; font-size: 18px; font-weight: 700; color: var(--text-dark);">Non connecté</h2>
+            <p id="profile-phone" style="color:var(--text-gray); margin:5px 0 0 0; font-size: 13px;"></p>
+            <div class="badge badge-inactive" id="profile-status">Statut : Compte Inactif</div>
         </div>
 
         <div class="payment-section">
@@ -1421,8 +1422,8 @@ body { overflow-x:hidden; }
     let isLoggedIn = false;
     let userPermissions = [];
     let viewHistory = ['view-home'];
-    let userName = 'Amadou Barry';
-    let userPhone = '+226 70 00 00 00';
+    let userName = '';
+    let userPhone = '';
     let selectedPlanName = '';
     let selectedPlanPrice = '';
     let currentClientDocId = null;
@@ -1717,9 +1718,10 @@ body { overflow-x:hidden; }
                 return;
             }
 
+            updateProfileUI(dataClient);
+
             if (!dataClient.actif) {
                 goTo('view-profile', 'Activation requise');
-                setTimeout(() => { document.getElementById('payment-modal').classList.add('open'); }, 220);
                 return;
             }
 
@@ -1733,7 +1735,6 @@ body { overflow-x:hidden; }
 
             if (!hasAccess) {
                 goTo('view-profile', 'Activation requise');
-                setTimeout(() => { document.getElementById('payment-modal').classList.add('open'); }, 220);
             } else if (itemUrl && itemUrl !== '#') {
                 openCollectiviteLink(itemName, itemUrl);
             } else {
@@ -1805,6 +1806,19 @@ body { overflow-x:hidden; }
 
     // Applique à l'interface l'état "connecté" une fois les données du client
     // récupérées depuis Firestore (utilisé à la connexion ET au démarrage de l'app).
+    // Met à jour la carte Profil (nom, numéro, statut) depuis la fiche Firestore.
+    // Statut « Actif » = compte activé par l'admin ET au moins un concours activé.
+    function updateProfileUI(dataClient) {
+        const perms = (dataClient && dataClient.permissions) || [];
+        const isActive = !!(dataClient && dataClient.actif) && perms.length > 0;
+        const phone = (dataClient && dataClient.whatsapp) || currentClientDocId || '';
+        document.getElementById('profile-name').innerText = (dataClient && dataClient.nom) || phone || 'Non connecté';
+        document.getElementById('profile-phone').innerText = phone;
+        const badge = document.getElementById('profile-status');
+        badge.className = 'badge ' + (isActive ? 'badge-active' : 'badge-inactive');
+        badge.innerText = 'Statut : ' + (isActive ? 'Compte Actif' : 'Compte Inactif');
+    }
+
     function applyLoggedInState(docId, dataClient) {
         isLoggedIn = true;
         currentClientDocId = docId;
@@ -1817,6 +1831,7 @@ body { overflow-x:hidden; }
         document.getElementById('menu-name').innerText = userName;
         document.getElementById('menu-phone').innerText = userPhone;
 
+        updateProfileUI(dataClient);
         renderUnlockedItems();
     }
 
@@ -1827,6 +1842,7 @@ body { overflow-x:hidden; }
         userPermissions = [];
         document.getElementById('home-profile-icon').classList.remove('logged-in');
         document.getElementById('logout-link').style.display = 'none';
+        updateProfileUI(null);
         document.getElementById('menu-name').innerText = "Non Connecté";
         document.getElementById('menu-phone').innerText = "Identifiez-vous";
         renderUnlockedItems();
@@ -2315,6 +2331,16 @@ body { overflow-x:hidden; }
     function handleProfileClick() {
         if (isLoggedIn) {
             goTo('view-profile', 'Mon Profil');
+            if (currentClientDocId) {
+                hnfDb.collection('clients').doc(currentClientDocId).get().then(function (doc) {
+                    if (doc.exists) {
+                        const d = doc.data();
+                        userPermissions = d.permissions || [];
+                        updateProfileUI(d);
+                        renderUnlockedItems();
+                    }
+                }).catch(function () { /* hors ligne : on garde l'affichage actuel */ });
+            }
         } else {
             goTo('view-auth', 'Authentification');
         }
