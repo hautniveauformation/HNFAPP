@@ -242,6 +242,14 @@
         .btn-primary { width: 100%; background: linear-gradient(135deg, #075b46, #0b8063); color: white; border: none; padding: 15px; border-radius: 13px; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: 'Poppins', sans-serif; box-shadow: 0 8px 18px rgba(7,91,70,0.18); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; box-sizing: border-box;}
         .btn-primary:active { transform: translateY(2px); }
         .btn-yellow { background: linear-gradient(135deg, #f7c928, #f2b91c); color: var(--text-dark); }
+        /* Fenêtre de message HNF (remplace les alertes du navigateur qui affichent l'adresse du site) */
+        .hnf-dialog-overlay { position: fixed; inset: 0; background: rgba(10,28,22,0.52); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 20000; padding: 24px; box-sizing: border-box; }
+        .hnf-dialog-overlay.open { display: flex; }
+        .hnf-dialog { background: #fff; border-radius: 22px; width: 100%; max-width: 340px; padding: 22px 20px 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.28); font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+        .hnf-dialog-title { font-size: 15px; font-weight: 700; color: var(--primary); margin: 0 0 10px; }
+        .hnf-dialog-msg { font-size: 14px; color: #33413b; line-height: 1.5; white-space: pre-line; word-break: break-word; margin: 0 0 18px; }
+        .hnf-dialog-btn { display: block; width: 100%; border: 0; border-radius: 13px; padding: 13px; background: var(--primary); color: #fff; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; }
+        .hnf-dialog-btn:active { background: var(--primary-2); }
         .password-wrap { position: relative; }
         .password-wrap .form-control { padding-right: 48px; }
         .pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: 0; padding: 8px 10px; color: #7a8a83; font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -1427,6 +1435,44 @@ body { overflow-x:hidden; }
             { name: "GSP", url: "#" }
         ]}
     ];
+
+    // Remplace les alertes natives du navigateur (qui affichent « hnfapp.vercel.app indique »)
+    // par une fenêtre HNF sans adresse. Les messages sont mis en file d'attente, un à la fois.
+    (function () {
+        const queue = [];
+        let overlay = null, msgEl = null, btn = null, showing = false;
+
+        function build() {
+            if (overlay) return;
+            overlay = document.createElement('div');
+            overlay.className = 'hnf-dialog-overlay';
+            overlay.setAttribute('role', 'alertdialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.innerHTML = '<div class="hnf-dialog"><div class="hnf-dialog-title">Haut Niveau Formation</div><div class="hnf-dialog-msg"></div><button type="button" class="hnf-dialog-btn">OK</button></div>';
+            document.body.appendChild(overlay);
+            msgEl = overlay.querySelector('.hnf-dialog-msg');
+            btn = overlay.querySelector('.hnf-dialog-btn');
+            btn.addEventListener('click', function () {
+                overlay.classList.remove('open');
+                showing = false;
+                next();
+            });
+        }
+
+        function next() {
+            if (showing || queue.length === 0) return;
+            showing = true;
+            build();
+            msgEl.textContent = queue.shift();
+            overlay.classList.add('open');
+            btn.focus();
+        }
+
+        window.alert = function (message) {
+            queue.push(String(message == null ? '' : message));
+            if (document.body) next();
+        };
+    })();
 
     let isLoggedIn = false;
     let userPermissions = [];
