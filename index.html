@@ -394,11 +394,14 @@
             transition:max-height .3s ease, opacity .2s ease, padding .3s ease;
             padding:0 10px;
         }
-        .unlocked-dropdown.open .unlocked-dropdown-panel { max-height:250px; opacity:1; padding:10px; overflow-y:auto; }
+        .unlocked-dropdown.open .unlocked-dropdown-panel { max-height:min(62vh, 430px); opacity:1; padding:10px; overflow-y:auto; }
         .unlocked-dropdown-panel::-webkit-scrollbar { width:4px; }
         .unlocked-dropdown-panel::-webkit-scrollbar-thumb { background:#cfcfcf; border-radius:10px; }
         .dropdown-item { background:#f8faf9; border-radius:12px; padding:9px 8px; margin-bottom:7px; display:flex; align-items:center; gap:8px; cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.06); }
         .dropdown-item:last-child { margin-bottom:0; }
+        .dropdown-group-title { font-size:10px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; color:#7a8a83; margin:10px 2px 6px; }
+        .dropdown-group-title:first-child { margin-top:0; }
+        .unlocked-dropdown-panel .unlocked-empty-state { color:#7a8a83; padding:6px 4px; }
         .dropdown-item .mini-icon { width:28px; height:28px; }
         .dropdown-item .mini-text { font-size:11px; font-weight:700; color:#24332d; white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25; }
         .dropdown-empty { color:#6d7772; font-size:11px; text-align:center; padding:10px 5px; line-height:1.45; }
@@ -960,13 +963,13 @@ body { overflow-x:hidden; }
         <div class="list-container">
             <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez votre domaine :</p>
 
-            <div class="list-item collectivite-option" onclick="openCollectiviteLink('Administration Générale', 'https://concourscomplet.vercel.app/CT/index1.html')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Administration Générale', 'https://concourscomplet.vercel.app/CT/index1.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-landmark"></use></svg></div>
                 <div class="list-text">Administration Générale<br><span style="font-size:10px;font-weight:500;color:#999;">Concours et ressources d'administration</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="alert('La rubrique Services financiers sera configurée prochainement.')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Services financiers', '#')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-coins"></use></svg></div>
                 <div class="list-text">Services financiers<br><span style="font-size:10px;font-weight:500;color:#999;">Concours et ressources financiers</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
@@ -1421,6 +1424,7 @@ body { overflow-x:hidden; }
 
     let isLoggedIn = false;
     let userPermissions = [];
+    let userActif = false;
     let viewHistory = ['view-home'];
     let userName = '';
     let userPhone = '';
@@ -1467,76 +1471,119 @@ body { overflow-x:hidden; }
     };
 
     // LOGIQUE DE GÉNÉRATION DES CONCOURS DÉBLOQUÉS
+    // Liste, par concours débloqué, toutes ses sous-rubriques. Un clic passe par
+    // checkAccess() : vérification en direct sur Firestore, puis ouverture du contenu.
+    const CC = 'https://concourscomplet.vercel.app/';
+    const DIRECT_SUBS_CATALOG = [
+        { n: 'Français', i: 'fa-language', u: CC + 'CD/Français/indexFrançais.html' },
+        { n: 'Littérature', i: 'fa-book', u: CC + 'CD/Littérature/indexLittérature.html' },
+        { n: 'Mathématiques', i: 'fa-calculator', u: CC + 'CD/Maths/indexMaths.html' },
+        { n: 'SVT', i: 'fa-microscope', u: CC + 'CD/SVT/indexSVT.html' },
+        { n: 'Psychotechnique', i: 'fa-brain', u: CC + 'CD/Psycho/indexPsycho.html' },
+        { n: 'Physique/Chimie', i: 'fa-atom', u: CC + 'CD/PC/indexPC.html' },
+        { n: 'Histoire/Géographie', i: 'fa-earth-africa', u: CC + 'CD/HG/indexHG.html' },
+        { n: 'Économie', i: 'fa-coins', u: CC + 'CD/Économie/indexÉconomie.html' },
+        { n: 'Sociologie', i: 'fa-user', u: CC + 'CD/Sociologie/indexSociologie.html' },
+        { n: 'Droit', i: 'fa-scale-balanced', u: CC + 'CD/Droit/indexDroit.html' },
+        { n: 'Philosophie', i: 'fa-square-question', u: CC + 'CD/Philosophie/indexPhilosophie.html' }
+    ];
+    const CT_SUBS_CATALOG = [
+        { n: 'Administration Générale', i: 'fa-landmark', u: CC + 'CT/index1.html' },
+        { n: 'Services financiers', i: 'fa-coins', u: '#' }
+    ];
+
     function renderUnlockedItems() {
         const container = document.getElementById('unlocked-items-container');
-        container.innerHTML = ''; 
+        container.innerHTML = '';
+        const perms = userPermissions || [];
 
-        if (!isLoggedIn || userPermissions.length === 0) {
+        if (!isLoggedIn) {
             container.innerHTML = '<div class="unlocked-empty-state">Connectez-vous ou abonnez-vous<br>pour voir vos accès</div>';
             return;
         }
-
-        let itemsHTML = '';
-
-        // 1. Vérification Concours Direct (Tout afficher si activé)
-        if (userPermissions.includes('Concours Direct')) {
-            const directItems = [
-                {n:'Accompagnement final', i:'fa-handshake-angle'}, {n:'Culture générale', i:'fa-globe'},
-                {n:'Français', i:'fa-language'}, {n:'Littérature', i:'fa-book'},
-                {n:'Mathématiques', i:'fa-calculator'}, {n:'SVT', i:'fa-microscope'},
-                {n:'Psychotechnique', i:'fa-brain'}, {n:'Chimie', i:'fa-flask'}, {n:'Physique', i:'fa-atom'},
-                {n:'Histoire/Géographie', i:'fa-earth-africa'}, {n:'Économie', i:'fa-coins'}, {n:'Sociologie', i:'fa-user'},
-                {n:'Droit', i:'fa-scale-balanced'}, {n:'Philosophie', i:'fa-square-question'}
-            ];
-            directItems.forEach(item => {
-                itemsHTML += `<div class="dropdown-item" onclick="alert('Ouverture de ${item.n}')">
-                    <div class="mini-icon" style="color: #c84040; background: #ffebeb;"><svg class="ico"><use href="#${item.i}"></use></svg></div>
-                    <div class="mini-text">${item.n} (Direct)</div>
-                </div>`;
-            });
+        if (!userActif || perms.length === 0) {
+            container.innerHTML = '<div class="unlocked-empty-state">Aucun concours débloqué<br>pour le moment</div>';
+            return;
         }
 
-        // 2. Vérification Concours Collectivités (Tout afficher si activé)
-        if (userPermissions.includes('Collectivités')) {
-            const colItems = [
-                {n:'Administration Générale', i:'fa-landmark'},
-                {n:'Services financiers', i:'fa-coins'}
-            ];
-            colItems.forEach(item => {
-                itemsHTML += `<div class="dropdown-item" onclick="alert('Ouverture de ${item.n}')">
-                    <div class="mini-icon" style="color: #2874c6; background: #eef5ff;"><svg class="ico"><use href="#${item.i}"></use></svg></div>
-                    <div class="mini-text">${item.n} (Collectivités)</div>
-                </div>`;
-            });
-        }
+        // Chaque élément : n = texte affiché, k = nom de permission vérifié, u = adresse, i = icône
+        const groups = [];
+        const RED = ['#c84040', '#ffebeb'], BLUE = ['#2874c6', '#eef5ff'], PURPLE = ['#5f33b3', '#f4f0ff'], GREEN = ['var(--primary)', 'var(--card-green-bg)'];
 
-        // 3. Vérification Culture Générale & Actualité (Unique)
-        if (userPermissions.includes('Culture Générale')) {
-            itemsHTML += `<div class="dropdown-item" onclick="alert('Ouverture de Culture Générale')">
-                <div class="mini-icon" style="color: #5f33b3; background: #f4f0ff;"><svg class="ico"><use href="#fa-globe"></use></svg></div>
-                <div class="mini-text">Culture Générale</div>
-            </div>`;
-        }
+        // 1. Concours Direct
+        const direct = DIRECT_SUBS_CATALOG.filter(x => perms.includes('Concours Direct') || perms.includes(x.n))
+            .map(x => ({ n: x.n, k: x.n, u: x.u, i: x.i }));
+        if (direct.length) groups.push({ title: 'Concours Direct', color: RED, items: direct });
 
-        // 4. Vérification Concours Professionnel (Sous-rubrique par sous-rubrique)
-        let allProSubs = [];
-        data.forEach(cat => cat.subs.forEach(s => allProSubs.push({name: s.name, icon: cat.icon})));
-        
-        allProSubs.forEach(pro => {
-            if (userPermissions.includes(pro.name)) {
-                itemsHTML += `<div class="dropdown-item" onclick="alert('Ouverture de ${pro.name}')">
-                    <div class="mini-icon" style="color: var(--primary); background: var(--card-green-bg);"><svg class="ico"><use href="#${pro.icon}"></use></svg></div>
-                    <div class="mini-text">${pro.name} (Pro)</div>
-                </div>`;
-            }
+        // 2. Accompagnement final
+        const af = [];
+        if (perms.includes('Accompagnement final')) af.push({ n: 'Accompagnement final Direct', k: 'Accompagnement final', u: CC + 'CD/AFD/indexAFD.html', i: 'fa-handshake-angle' });
+        if (perms.includes('Accompagnement final Pro')) af.push({ n: 'Accompagnement final Pro', k: 'Accompagnement final Pro', u: '#', i: 'fa-handshake-angle' });
+        if (af.length) groups.push({ title: 'Accompagnement final', color: PURPLE, items: af });
+
+        // 3. Culture générale
+        const cg = [];
+        if (perms.includes('Culture générale')) cg.push({ n: 'Culture générale Direct', k: 'Culture générale', u: CC + 'CD/CGD/indexCGD.html', i: 'fa-globe' });
+        if (perms.includes('Culture générale Pro')) cg.push({ n: 'Culture générale Pro', k: 'Culture générale Pro', u: '#', i: 'fa-globe' });
+        if (cg.length) groups.push({ title: 'Culture générale', color: PURPLE, items: cg });
+
+        // 4. Concours Professionnel : une section par filière, avec les seules matières débloquées
+        data.forEach(cat => {
+            const subs = cat.subs.filter(sub => perms.includes(sub.name))
+                .map(sub => ({ n: sub.name, k: sub.name, u: sub.url, i: cat.icon }));
+            if (subs.length) groups.push({ title: 'Pro · ' + cat.title, color: GREEN, items: subs });
         });
 
-        container.innerHTML = itemsHTML;
+        // 5. Collectivités Territoriales
+        const ct = CT_SUBS_CATALOG.filter(x => perms.includes('Collectivités') || perms.includes(x.n))
+            .map(x => ({ n: x.n, k: x.n, u: x.u, i: x.i }));
+        if (ct.length) groups.push({ title: 'Collectivités Territoriales', color: BLUE, items: ct });
+
+        if (groups.length === 0) {
+            container.innerHTML = '<div class="unlocked-empty-state">Aucun concours débloqué<br>pour le moment</div>';
+            return;
+        }
+
+        groups.forEach(g => {
+            const h = document.createElement('div');
+            h.className = 'dropdown-group-title';
+            h.textContent = g.title;
+            container.appendChild(h);
+            g.items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'dropdown-item';
+                row.innerHTML = '<div class="mini-icon"><svg class="ico"><use href="#' + item.i + '"></use></svg></div><div class="mini-text"></div>';
+                row.querySelector('.mini-icon').style.color = g.color[0];
+                row.querySelector('.mini-icon').style.background = g.color[1];
+                row.querySelector('.mini-text').textContent = item.n;
+                row.addEventListener('click', function () {
+                    document.getElementById('unlocked-dropdown').classList.remove('open');
+                    checkAccess(item.k, item.u);
+                });
+                container.appendChild(row);
+            });
+        });
+    }
+
+    // Relit la fiche du candidat sur Firestore et rafraîchit profil + concours débloqués.
+    function refreshClientData() {
+        if (!isLoggedIn || !currentClientDocId) return Promise.resolve();
+        return hnfDb.collection('clients').doc(currentClientDocId).get().then(function (doc) {
+            if (doc.exists) {
+                const d = doc.data();
+                userPermissions = d.permissions || [];
+                userActif = !!d.actif;
+                updateProfileUI(d);
+                renderUnlockedItems();
+            }
+        }).catch(function () { /* hors ligne : on garde l'affichage actuel */ });
     }
 
     function toggleUnlockedDropdown(event) {
         if (event) event.stopPropagation();
-        document.getElementById('unlocked-dropdown').classList.toggle('open');
+        const dd = document.getElementById('unlocked-dropdown');
+        dd.classList.toggle('open');
+        if (dd.classList.contains('open')) refreshClientData();
     }
 
     // Ferme automatiquement le menu si l'utilisateur appuie ailleurs sur l'écran.
@@ -1731,6 +1778,7 @@ body { overflow-x:hidden; }
                             (permissions.includes('Collectivités') && isColSub(itemName));
 
             userPermissions = permissions; // met à jour l'affichage local (Mes accès débloqués)
+            userActif = !!dataClient.actif;
             renderUnlockedItems();
 
             if (!hasAccess) {
@@ -1738,7 +1786,7 @@ body { overflow-x:hidden; }
             } else if (itemUrl && itemUrl !== '#') {
                 openCollectiviteLink(itemName, itemUrl);
             } else {
-                alert("✅ ACCÈS AUTORISÉ ! \nOuverture de la section : " + itemName);
+                alert("✅ Accès autorisé : " + itemName + "\nCette rubrique sera disponible très prochainement.");
             }
         }).catch(function (err) {
             alert("Erreur de connexion au serveur. Vérifiez votre connexion internet et réessayez.");
@@ -1825,6 +1873,7 @@ body { overflow-x:hidden; }
         userPhone = dataClient.whatsapp || docId;
         userName = dataClient.nom || userPhone;
         userPermissions = dataClient.permissions || [];
+        userActif = !!dataClient.actif;
 
         document.getElementById('home-profile-icon').classList.add('logged-in');
         document.getElementById('logout-link').style.display = '';
@@ -1840,6 +1889,7 @@ body { overflow-x:hidden; }
         isLoggedIn = false;
         currentClientDocId = null;
         userPermissions = [];
+        userActif = false;
         document.getElementById('home-profile-icon').classList.remove('logged-in');
         document.getElementById('logout-link').style.display = 'none';
         updateProfileUI(null);
@@ -2331,16 +2381,7 @@ body { overflow-x:hidden; }
     function handleProfileClick() {
         if (isLoggedIn) {
             goTo('view-profile', 'Mon Profil');
-            if (currentClientDocId) {
-                hnfDb.collection('clients').doc(currentClientDocId).get().then(function (doc) {
-                    if (doc.exists) {
-                        const d = doc.data();
-                        userPermissions = d.permissions || [];
-                        updateProfileUI(d);
-                        renderUnlockedItems();
-                    }
-                }).catch(function () { /* hors ligne : on garde l'affichage actuel */ });
-            }
+            refreshClientData();
         } else {
             goTo('view-auth', 'Authentification');
         }
