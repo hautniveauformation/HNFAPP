@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <script>
+    // ===== BLOCAGE ACCÈS HORS APPLICATION (document.referrer) =====
+    // Doit rester la toute première instruction de la page : elle s'exécute
+    // avant que quoi que ce soit d'autre ne s'affiche.
+    (function () {
+        var PACKAGE_REFERRER = 'android-app://app.vercel.hnfapp.twa';
+        var SECRET_TOKEN = 'hnf2026x'; // jeton de secours, voir explication fournie
+
+        var viaApp = document.referrer.indexOf(PACKAGE_REFERRER) === 0;
+
+        var hasSecretToken = false;
+        try {
+            var params = new URLSearchParams(window.location.search);
+            hasSecretToken = params.get('src') === SECRET_TOKEN;
+        } catch (e) {}
+
+        var dejaValide = false;
+        try { dejaValide = sessionStorage.getItem('viaApp') === 'true'; } catch (e) {}
+
+        if (viaApp || hasSecretToken) {
+            try { sessionStorage.setItem('viaApp', 'true'); } catch (e) {}
+        } else if (!dejaValide) {
+            document.open();
+            document.write(
+                '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">' +
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+                '<title>Application requise</title><style>' +
+                'body{margin:0;font-family:sans-serif;background:#0b4d3c;color:#fff;' +
+                'display:flex;align-items:center;justify-content:center;min-height:100vh;' +
+                'text-align:center;padding:20px;box-sizing:border-box;}' +
+                'div{max-width:340px;}h2{margin-bottom:10px;}p{opacity:.9;font-size:14px;}' +
+                '</style></head><body><div><h2>\uD83D\uDCF1 Application requise</h2>' +
+                '<p>Ce contenu n\'est accessible que depuis l\'application HNF. ' +
+                'Veuillez l\'ouvrir depuis l\'app installée sur votre téléphone.</p>' +
+                '</div></body></html>'
+            );
+            document.close();
+            window.stop();
+        }
+    })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haut Niveau Formation - Application Complète</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b4d3c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HNF">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    
+    <!-- Polices et Icônes -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --primary: #0b4d3c;
+            --primary-2: #0b8063;
+            --yellow: #f1c40f;
+            --bg-app: #ffffff;
+            --text-dark: #1a1a1a;
+            --text-gray: #666666;
+            --card-green-bg: #eaf8f1; --card-green-icon: #197045;
+            --card-purple-bg: #f4f0ff; --card-purple-icon: #5f33b3;
+            --card-orange-bg: #fff3e6; --card-orange-icon: #d97736;
+            --card-blue-bg: #eef7ff; --card-blue-icon: #2972b6;
+            --card-red-bg: #ffebeb; --card-red-icon: #c84040;
+        }
+
+        /* --- STYLES GLOBAUX --- */
+        body { margin: 0; font-family: 'Poppins', sans-serif; background-color: #e9ecef; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 420px; background-color: var(--bg-app); min-height: 100vh; position: relative; overflow-x: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.15); display: flex; flex-direction: column;}
+        .view { display: none; animation: fadeIn 0.3s ease; padding-bottom: 90px; flex-grow: 1; overflow-y: auto;}
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- MENU LATÉRAL (SIDE MENU) --- */
+        .side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .side-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 1000; transition: left 0.3s ease; box-shadow: 2px 0 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .side-menu.open { left: 0; }
+        .side-menu-overlay.open { display: block; opacity: 1; }
+
+        .side-menu-header { background: var(--primary); color: white; padding: 30px 20px 20px 20px; }
+        .side-avatar { width: 60px; height: 60px; background: white; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 15px; }
+        .side-menu-content { padding: 20px 0; flex-grow: 1; overflow-y: auto; }
+        .side-nav-item { display: flex; align-items: center; gap: 15px; padding: 15px 20px; color: var(--text-dark); text-decoration: none; font-size: 14px; font-weight: 500; transition: background 0.2s; }
+        .side-nav-item:active { background: #f8f9fa; }
+        .side-nav-item i { font-size: 18px; width: 25px; text-align: center; color: var(--text-gray); }
+
+        /* --- HEADERS --- */
+        .header, .sub-header { background-color: var(--primary); color: white; padding: 15px 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;}
+        .header { justify-content: space-between; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .menu-icon { font-size: 20px; cursor: pointer; }
+        .header-title { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: 0.5px; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .notification { position: relative; font-size: 18px; cursor: pointer; }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; font-size: 11px; font-weight: bold; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid var(--primary);}
+        .profile-btn { width: 32px; height: 32px; background-color: white; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; border: none; }
+        .profile-btn.logged-in { background-color: var(--yellow); }
+        .back-btn { background: none; border: none; color: #4f4541; font-size: 27px; margin-right: 2px; cursor: pointer; padding: 4px 2px; display:flex; align-items:center; justify-content:center;}
+
+        /* --- ACCUEIL & BANNIÈRE REVISITÉE --- */
+        .banner-wrapper { padding: 20px 15px 10px 15px; }
+        .banner { 
+            min-height: 185px; 
+            border-radius: 26px; 
+            padding: 20px 15px; 
+            background: radial-gradient(circle at 92% 8%, rgba(255,255,255,0.18), transparent 25%), linear-gradient(135deg, #064936, #0b8063 72%, #0e9472); 
+            box-shadow: 0 15px 30px rgba(6,73,54,0.22); 
+            border: 1px solid rgba(255,255,255,0.12);
+            position: relative;
+            overflow: visible;
+        }
+        .banner:after { 
+            content: ""; position: absolute; width: 150px; height: 150px; right: -70px; top: -70px; 
+            border: 1px solid rgba(255,255,255,0.13); border-radius: 50%; 
+            box-shadow: 0 0 0 25px rgba(255,255,255,0.035), 0 0 0 50px rgba(255,255,255,0.025); 
+            pointer-events: none; 
+        }
+        
+        .banner-content { display: flex; gap: 8px; position: relative; z-index: 2; height: 100%; align-items: stretch; }
+        
+        /* Partie Gauche (Texte) */
+        .banner-left { flex: 1.15; display: flex; flex-direction: column; justify-content: center; }
+        .badge-star { 
+            display: inline-flex; align-items: center; gap: 6px; 
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); 
+            padding: 5px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; 
+            letter-spacing: 0.5px; margin-bottom: 10px; width: fit-content; color: white;
+        }
+        .badge-star i { color: var(--yellow); }
+        .banner h2 { font-size: 19px; line-height: 1.2; margin: 0; color: white; }
+        .banner h2 span { color: var(--yellow); }
+        .banner p { font-size: 12px; letter-spacing: 0.2px; margin: 8px 0 12px 0; color: rgba(255,255,255,0.9); }
+        .btn-start { 
+            padding: 10px 14px; border-radius: 30px; box-shadow: 0 8px 18px rgba(0,0,0,0.16); 
+            transition: 0.2s; background: var(--yellow); color: var(--text-dark); 
+            border: none; font-size: 12px; font-weight: 700; cursor: pointer; width: fit-content; 
+        }
+        .btn-start:active { transform: translateY(2px) scale(0.97); }
+
+        /* Ligne contenant "Commencer" et "Nos tarifs", même niveau, avec espace entre eux */
+        .banner-buttons-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+
+        /* Concours débloqués : même ligne que le badge HAUT NIVEAU */
+        .banner-topline {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:8px;
+            width:100%;
+            margin-bottom:14px;
+            position:relative;
+            z-index:40;
+        }
+        .banner-topline .badge-star {
+            flex:0 1 auto;
+            margin:0;
+            white-space:nowrap;
+        }
+        .banner-topline .banner-right {
+            position:relative;
+            top:auto; right:auto;
+            width:auto;
+            flex:0 1 195px;
+            height:auto;
+            padding:0;
+            background:transparent;
+            border:0;
+            display:block;
+            z-index:40;
+        }
+        .unlocked-vertical-title { font-size: 11px; font-weight: 700; color: white; }
+        .unlocked-vertical-scroll { display:flex; flex-direction:column; gap:8px; }
+        .unlocked-mini-card {
+            background: white; border-radius: 12px; padding: 7px 9px;
+            display:flex; align-items:center; gap:8px; cursor:pointer;
+            box-shadow:0 5px 12px rgba(0,0,0,.12);
+        }
+        .unlocked-mini-card:active { transform:scale(.97); }
+        .mini-icon { width:27px; height:27px; background:var(--card-green-bg); color:var(--primary); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+        .mini-text { font-size:11px; font-weight:700; color:var(--text-dark); white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25; }
+        .unlocked-empty-state { font-size:12px; text-align:center; color:rgba(255,255,255,.85); line-height:1.45; }
+
+        /* --- SECTIONS --- */
+        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; margin: 15px 0; }
+        .section-title { font-size: 16px; font-weight: 700; color: var(--text-dark); margin: 0; display: flex; align-items: center; gap: 10px; }
+        .see-all { font-size: 14px; font-weight: 600; color: var(--text-dark); text-decoration: none; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 15px; }
+        .grid-item { border-radius: 16px; padding: 15px 10px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; min-height: 142px; border: 1px solid rgba(255,255,255,0.85); box-shadow: 0 7px 18px rgba(22,52,42,0.07); transition: transform 0.18s, box-shadow 0.18s;}
+        .grid-item:active { transform: translateY(2px) scale(0.98); box-shadow: 0 3px 10px rgba(22,52,42,0.10); }
+        .icon-box { width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; margin-bottom: 10px; box-shadow: 0 7px 14px rgba(0,0,0,0.10); }
+        .item-title { font-size: 11.5px; font-weight: 700; margin: 0 0 5px 0; color: var(--text-dark); line-height: 1.2;}
+        .item-desc { font-size: 11px; color: var(--text-gray); margin: 0; line-height: 1.2;}
+        
+        .card-1 { background-color: var(--card-green-bg); } .card-1 .icon-box { background-color: var(--card-green-icon); }
+        .card-2 { background-color: var(--card-purple-bg); } .card-2 .icon-box { background-color: var(--card-purple-icon); }
+        .card-3 { background-color: var(--card-orange-bg); } .card-3 .icon-box { background-color: var(--card-orange-icon); }
+        .card-4 { background-color: var(--card-blue-bg); } .card-4 .icon-box { background-color: var(--card-blue-icon); }
+        .card-5 { background-color: var(--card-red-bg); } .card-5 .icon-box { background-color: var(--card-red-icon); }
+        .card-6 { background: linear-gradient(145deg, #f0f4ff, #e9efff); } .card-6 .icon-box { background: linear-gradient(135deg, #405de6, #6b4fd8); }
+
+        .news-wrapper { padding: 0 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;}
+        .news-card { background: #f0fdf4; padding: 15px; border-radius: 16px; display: flex; align-items: flex-start; gap: 15px; position: relative; border: 1px solid #dcfce7;}
+        .news-category-card { align-items: center; cursor: pointer; min-height: 62px; padding: 12px 15px; }
+        .news-category-card .news-content h4 { font-size: 15px; margin: 0; }
+        .news-category-card .chevron { margin-left: auto; color: var(--primary); font-size: 13px; }
+        .news-icon-circle { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0;}
+        .news-content h4 { margin: 0 0 4px 0; font-size: 13px; font-weight: 700; color: var(--text-dark); }
+        .news-content p { margin: 0; font-size: 12px; color: var(--text-gray); line-height: 1.4; padding-right: 60px;}
+        .badge-new { position: absolute; top: 15px; right: 15px; background: var(--primary); color: white; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 10px; }
+        .time-ago { position: absolute; bottom: 15px; right: 15px; font-size: 11px; color: var(--text-gray); font-weight: 500;}
+
+        /* --- LISTES QCM --- */
+        .list-container { padding: 20px 15px; }
+        .list-item { background: white; border-radius: 17px; padding: 14px; margin-bottom: 12px; display: flex; align-items: center; box-shadow: 0 7px 18px rgba(21,54,43,0.055); cursor: pointer; border: 1px solid #e8eeeb; border-left: 4px solid var(--primary); transition: 0.18s;}
+        .list-item:active { transform: scale(0.985); background: #fbfefd; }
+        .list-icon { width: 46px; height: 46px; border-radius: 14px; background: var(--card-green-bg); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 20px; margin-right: 15px; box-shadow: inset 0 0 0 1px rgba(7,91,70,0.04); }
+        .list-text { flex-grow: 1; font-size: 13px; font-weight: 600; color: var(--text-dark);}
+        .locked-item .list-icon { background: #fee2e2; color: #e74c3c; }
+        .collectivite-option { border-left-color: #2874c6; }
+        .collectivite-option .list-icon { background: #eef5ff; color: #2874c6; }
+
+        /* --- AUTHENTIFICATION --- */
+        .auth-container, .profile-card { background: white; border: 1px solid #e8eeeb; border-radius: 22px; margin: 20px 15px; box-shadow: 0 10px 28px rgba(18,53,42,0.08); padding: 20px; }
+        .tabs { display: flex; margin-bottom: 25px; border-bottom: 1px solid #e4ebe7; }
+        .tab { flex: 1; text-align: center; padding: 12px; font-weight: 600; font-size: 14px; color: var(--text-gray); cursor: pointer; position: relative;}
+        .tab.active { color: var(--primary); }
+        .tab.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background: var(--primary); border-radius: 4px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-control { width: 100%; padding: 14px 15px; border: 1px solid #dce6e1; border-radius: 13px; box-sizing: border-box; background: #f7faf8; font-size: 13px; font-family: 'Poppins', sans-serif; transition: 0.2s;}
+        .form-control:focus { outline: none; border-color: var(--primary-2); box-shadow: 0 0 0 4px rgba(11,128,99,0.09); background: white;}
+        .btn-primary { width: 100%; background: linear-gradient(135deg, #075b46, #0b8063); color: white; border: none; padding: 15px; border-radius: 13px; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: 'Poppins', sans-serif; box-shadow: 0 8px 18px rgba(7,91,70,0.18); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; box-sizing: border-box;}
+        .btn-primary:active { transform: translateY(2px); }
+        .btn-yellow { background: linear-gradient(135deg, #f7c928, #f2b91c); color: var(--text-dark); }
+        /* Fenêtre de message HNF (remplace les alertes du navigateur qui affichent l'adresse du site) */
+        .hnf-dialog-overlay { position: fixed; inset: 0; background: rgba(10,28,22,0.52); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 20000; padding: 24px; box-sizing: border-box; }
+        .hnf-dialog-overlay.open { display: flex; }
+        .hnf-dialog { background: #fff; border-radius: 22px; width: 100%; max-width: 340px; padding: 22px 20px 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.28); font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+        .hnf-dialog-title { font-size: 15px; font-weight: 700; color: var(--primary); margin: 0 0 10px; }
+        .hnf-dialog-msg { font-size: 14px; color: #33413b; line-height: 1.5; white-space: pre-line; word-break: break-word; margin: 0 0 18px; }
+        .hnf-dialog-btn { display: block; width: 100%; border: 0; border-radius: 13px; padding: 13px; background: var(--primary); color: #fff; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; }
+        .hnf-dialog-btn:active { background: var(--primary-2); }
+        .password-wrap { position: relative; }
+        .password-wrap .form-control { padding-right: 48px; }
+        .pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: 0; padding: 8px 10px; color: #7a8a83; font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .pw-toggle:active { color: var(--primary-2); }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .row { display: flex; gap: 10px; }
+
+        /* --- PROFIL & PAIEMENT --- */
+        .profile-card { text-align: center; }
+        .avatar-large { width: 92px; height: 92px; background: var(--card-green-bg); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; margin: 0 auto 15px auto; box-shadow: 0 10px 24px rgba(7,91,70,0.12); border: 5px solid white; }
+        .badge { display: inline-block; padding: 6px 15px; border-radius: 20px; font-size: 14px; font-weight: 700; margin-top: 12px; }
+        .badge-inactive { background: #fff1f0; color: #e74c3c; border: 1px solid #ffd9d6; }
+        .badge-active { background: #eaf8f0; color: #1a9d55; border: 1px solid #c6ebd5; }
+        
+        .payment-section { margin: 0 15px 20px; padding: 18px; border-radius: 22px; background: linear-gradient(145deg, #fffdf6, #fff9e9); border: 1px solid #f2e5b8; box-shadow: 0 10px 25px rgba(104,77,13,0.08); }
+        .payment-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+        .payment-kicker { display: block; font-size: 10px; font-weight: 800; letter-spacing: 1.1px; color: #9a7410; margin-bottom: 5px; }
+        .payment-head h3 { margin: 0; font-size: 16px; color: #17241f; }
+        .price-pill { white-space: nowrap; background: #fff; border: 1px solid #f1df9d; border-radius: 14px; padding: 8px 10px; font-size: 15px; font-weight: 800; color: #1c2823; box-shadow: 0 5px 12px rgba(0,0,0,0.04); }
+        .price-pill small { font-size: 10px; color: #9a7410; }
+        .payment-methods { display: grid; gap: 9px; margin-top: 16px; }
+        .payment-method { width: 100%; border: 1px solid #ecefe9; background: #fff; border-radius: 15px; padding: 12px; display: flex; align-items: center; gap: 11px; text-align: left; font-family: 'Poppins', sans-serif; cursor: pointer; transition: 0.18s; }
+        .payment-method:active { transform: scale(0.985); }
+        .payment-method .payment-logo { width: 39px; height: 39px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 900; }
+        .payment-method.orange .payment-logo { background: #f57c00; }
+        .payment-method.moov .payment-logo { background: #0878c9; }
+        .payment-method span:nth-child(2) { flex: 1; }
+        .payment-method strong { display: block; font-size: 14px; color: #202a26; }
+        .payment-method small { display: block; font-size: 11px; color: #89938e; margin-top: 2px; }
+        .payment-note { display: flex; gap: 7px; align-items: flex-start; margin-top: 13px; font-size: 11px; line-height: 1.4; color: #7b817d; }
+        .btn-whatsapp { display: flex; align-items: center; justify-content: center; gap: 10px; width: calc(100% - 30px); background: #25D366; color: white; text-align: center; padding: 15px; border-radius: 14px; text-decoration: none; font-weight: 600; margin: 15px; box-sizing: border-box; font-size: 14px; box-shadow: 0 9px 20px rgba(37,211,102,0.22); transition: 0.2s;}
+        .btn-whatsapp:active { transform: scale(0.98); }
+        
+        /* --- ABONNEMENTS DANS L'AUTHENTIFICATION --- */
+        .subscription-auth { padding-bottom: 18px; }
+        .subscription-card { position: relative; text-align: center; padding: 20px 15px 17px; border-radius: 18px; margin-bottom: 15px; border: 1px solid #e7eee9; background: linear-gradient(145deg, #f9fdfb, #ffffff); }
+        .subscription-card .subscription-icon { width: 54px; height: 54px; margin: 0 auto 10px; border-radius: 17px; display: flex; align-items: center; justify-content: center; background: #eaf7f1; color: var(--primary); font-size: 22px; }
+        .subscription-card h2 { margin: 4px 0 5px; font-size: 18px; color: var(--text-dark); }
+        .subscription-card p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--text-gray); }
+        .subscription-price { margin: 6px 0 8px; font-size: 27px; font-weight: 900; color: var(--text-dark); }
+        .subscription-price small { font-size: 12px; color: #9a7410; font-weight: 800; }
+        .annual-plan { background: linear-gradient(145deg, #fffdf6, #fff9e9); border-color: #f2e5b8; }
+        .annual-plan .subscription-icon { background: #fff4c9; color: #9a7410; }
+        .best-value { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 5px 10px; border-radius: 20px; background: #fff1bd; color: #8b690d; font-size: 11px; font-weight: 800; }
+        .subscription-auth .payment-methods { margin-top: 8px; }
+
+        /* --- FORMULES D ABONNEMENT DANS LE PAIEMENT --- */
+        /* ===== SÉLECTEUR D'ABONNEMENT PREMIUM ===== */
+        .payment-tabs { position:relative; display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; margin:18px 0 17px; background:#edf3f0; border:1px solid #dfeae5; border-radius:17px; box-shadow:inset 0 1px 2px rgba(20,57,45,.05); }
+        .payment-tab-slider { position:absolute; z-index:0; top:4px; bottom:4px; left:4px; width:calc(50% - 6px); background:#fff; border-radius:13px; box-shadow:0 4px 12px rgba(7,91,70,.13), 0 1px 3px rgba(0,0,0,.06); transition:transform .32s cubic-bezier(.22,.8,.25,1); }
+        .payment-tabs.annual .payment-tab-slider { transform:translateX(calc(100% + 4px)); }
+        .payment-tab { position:relative; z-index:1; min-height:54px; border:0; background:transparent; border-radius:13px; padding:7px 5px; font-family:'Poppins',sans-serif; color:#7d8984; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; transition:color .25s ease, transform .15s ease; }
+        .payment-tab:active { transform:scale(.97); }
+        .payment-tab.active { color:var(--primary); }
+        .payment-tab-title { font-size:10px; font-weight:800; line-height:1.15; }
+        .payment-tab-price { font-size:9px; font-weight:600; color:#9aa59f; }
+        .payment-tab.active .payment-tab-price { color:#6b7d75; }
+        .payment-tab-badge { position:absolute; top:-9px; right:3px; background:#f2b91c; color:#1d281f; border:2px solid #fff; border-radius:9px; padding:3px 6px; font-size:7px; line-height:1; font-weight:900; letter-spacing:.25px; box-shadow:0 3px 8px rgba(0,0,0,.12); }
+        .payment-plan { display:none; animation:planFade .25s ease; }
+        .payment-plan.active { display:block; }
+        @keyframes planFade { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+        .payment-plan-price { display:flex; align-items:baseline; gap:6px; font-size:23px; font-weight:850; color:var(--text-dark); margin:2px 0 14px; }
+        .payment-plan-price small { font-size:9px; color:#9a7410; font-weight:700; }
+        .payment-benefit { display:flex; align-items:center; gap:6px; margin:-7px 0 13px; font-size:9px; color:#587168; font-weight:600; }
+        .payment-benefit i { color:#0b8063; font-size:10px; }
+
+        /* --- TABLEAU DES ABONNEMENTS (PROFIL) --- */
+        .sub-plans-list { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+        .sub-plan-row { background:#fff; border:1px solid #ecefe9; border-radius:16px; padding:13px 14px; box-shadow:0 6px 16px rgba(18,53,42,0.05); }
+        .sub-plan-title { font-size:12.5px; font-weight:700; color:#17241f; margin-bottom:9px; display:flex; align-items:center; gap:8px; }
+        .sub-plan-title .mini-icon { width:26px; height:26px; font-size:12px; flex-shrink:0; }
+        .sub-plan-options { display:flex; gap:8px; flex-wrap:wrap; }
+        .sub-plan-option { flex:1; min-width:126px; display:flex; align-items:center; justify-content:space-between; gap:8px; background:#f7faf8; border-radius:12px; padding:9px 9px 9px 11px; }
+        .sub-plan-price { font-size:12px; font-weight:800; color:#587168; line-height:1.15; }
+        .sub-plan-price small { display:block; font-size:8.5px; font-weight:700; letter-spacing:.3px; color:#9aa59f; text-transform:uppercase; margin-top:1px; }
+        .btn-choose { background:linear-gradient(135deg,#075b46,#0b8063); color:#fff; border:none; padding:8px 13px; border-radius:10px; font-size:10.5px; font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif; white-space:nowrap; box-shadow:0 6px 14px rgba(7,91,70,.18); transition:.15s; }
+        .btn-choose:active { transform:scale(.95); }
+        .btn-choose.whatsapp { background:linear-gradient(135deg,#25D366,#1ebe5c); box-shadow:0 6px 14px rgba(37,211,102,.22); }
+
+        /* --- VUE : MOYENS DE PAIEMENT --- */
+        .payment-recap { text-align:center; }
+        .payment-recap .payment-kicker { margin-bottom:6px; }
+        .payment-recap-value { font-size:15px; font-weight:800; color:#17241f; }
+        .payment-recap-value small { display:block; margin-top:4px; font-size:12px; font-weight:700; color:#0b8063; }
+
+        /* --- CARTES DE PAIEMENT (LOGOS ORANGE MONEY / MOOV MONEY) --- */
+        .big-pay-card { display:flex; align-items:center; gap:13px; width:100%; padding:14px; border-radius:18px; border:1.5px solid; cursor:pointer; font-family:'Poppins',sans-serif; text-align:left; transition:.15s; }
+        .big-pay-card:active { transform:scale(.98); }
+        .big-pay-card.orange-card { border-color:#f6c98a; background:linear-gradient(135deg,#fff9f0,#fdf1de); }
+        .big-pay-card.moov-card { border-color:#b9c9f5; background:linear-gradient(135deg,#f0f3fe,#e7edfd); }
+        .big-pay-logo { width:54px; height:54px; border-radius:15px; background:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 4px 10px rgba(0,0,0,0.08); }
+        .big-pay-info { flex:1; min-width:0; }
+        .big-pay-title { display:block; font-size:15px; font-weight:800; margin-bottom:1px; }
+        .big-pay-title.t-orange { color:#e6790a; }
+        .big-pay-title.t-moov { color:#3457c9; }
+        .big-pay-sub { display:block; font-size:10.5px; font-weight:600; margin-bottom:7px; }
+        .big-pay-sub.t-orange { color:#c9761c; }
+        .big-pay-sub.t-moov { color:#5875d1; }
+        .big-pay-feature { display:flex; align-items:center; gap:5px; font-size:9.5px; font-weight:700; color:#4b564f; }
+        .big-pay-feature .ico { font-size:11px; flex-shrink:0; }
+        .big-pay-feature span { font-family:'Poppins',sans-serif; letter-spacing:.2px; word-break:break-all; }
+        .btn-primary.btn-call { background:linear-gradient(135deg,#1b6fd1,#2f8be0); box-shadow:0 10px 22px rgba(27,111,209,.25); margin-bottom:10px; }
+        /* --- BOTTOM NAV --- */
+        .bottom-nav { background: rgba(255,255,255,0.94); position: fixed; bottom: 0; width: 100%; max-width: 420px; display: flex; justify-content: space-around; padding: 10px 0 15px 0; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 -8px 28px rgba(20,53,43,0.10); border-top: 1px solid rgba(220,231,226,0.9); z-index: 100; border-top-left-radius: 20px; border-top-right-radius: 20px;}
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #a0a0a0; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; min-width: 58px; padding: 5px 8px; border-radius: 14px; transition: 0.18s;}
+        .nav-item.active { background: rgba(7,91,70,0.08); color: var(--primary); }
+
+        /* ===== MODAL PAIEMENT ===== */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(10,28,22,0.52); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: flex-end; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .payment-modal { width: min(100%, 420px); background: #fff; border-radius: 28px 28px 0 0; padding: 26px 20px 24px; position: relative; box-shadow: 0 -15px 45px rgba(0,0,0,0.22); animation: modalUp 0.25s ease; }
+        @keyframes modalUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-close { position: absolute; right: 16px; top: 14px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #f2f5f3; color: #53605a; font-size: 15px; }
+        .modal-payment-icon { width: 58px; height: 58px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: #eaf7f1; color: #075b46; font-size: 25px; margin-bottom: 13px; }
+        .payment-modal h2 { margin: 0; font-size: 21px; color: #17241f; }
+        .payment-number { background: #f4faf7; border: 1px dashed #9bcdbd; color: #075b46; border-radius: 15px; text-align: center; padding: 14px; font-size: 22px; font-weight: 800; letter-spacing: 1px; margin-bottom: 15px; }
+        .payment-steps { display: grid; gap: 9px; margin-bottom: 17px; }
+        .payment-steps div { display: flex; gap: 10px; align-items: center; font-size: 12px; color: #68756f; }
+        .payment-steps b { width: 24px; height: 24px; flex: 0 0 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #075b46; color: #fff; font-size: 12px; }
+
+        /* ===== FILIÈRES ===== */
+        #categories-container { padding-top: 10px; }
+        #categories-container > p { background: linear-gradient(135deg, #eef8f4, #f8fbfa); border: 1px solid #e0eee8; padding: 12px 14px; border-radius: 15px; margin-bottom: 14px !important; }
+        .filiere-card { background: #fff; border-radius: 22px; overflow: hidden; margin-bottom: 16px; border: 1px solid #e8efec; box-shadow: 0 10px 24px rgba(20,57,45,0.07); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .filiere-card:active { transform: scale(0.985); box-shadow: 0 5px 14px rgba(20,57,45,0.09); }
+        .filiere-visual { height: 170px; position: relative; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, rgba(11,128,99,0.13), transparent 38%), linear-gradient(145deg, #f3faf7, #edf7f3); border-bottom: 1px solid #edf2ef; }
+        .filiere-icon { width: 108px; height: 108px; border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 52px; color: #075b46; background: rgba(255,255,255,0.95); box-shadow: 0 14px 28px rgba(7,91,70,0.13); border: 1px solid rgba(7,91,70,0.06); }
+        .filiere-number { position: absolute; top: 13px; right: 14px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #075b46; color: #fff; font-size: 12px; font-weight: 800; }
+        .filiere-info { padding: 16px 16px 14px; }
+        .filiere-kicker { color: #0b8063; font-size: 10px; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
+        .filiere-title { color: #14231e; font-size: 16px; line-height: 1.3; font-weight: 750; }
+        .filiere-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 13px; color: #7b8983; font-size: 12px; }
+        .filiere-arrow { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #edf8f3; color: #075b46; }
+    
+        /* ===== CONCOURS DÉBLOQUÉS : BOUTON FLOTTANT ===== */
+        .unlocked-dropdown { position:relative; z-index:30; }
+        .unlocked-dropdown-toggle {
+            width:100%; border:1px solid rgba(255,255,255,.38);
+            background:rgba(255,255,255,.18); color:#fff; border-radius:16px;
+            padding:10px 12px; display:flex; align-items:center; justify-content:space-between;
+            font-family:inherit; font-size:11px; font-weight:800; cursor:pointer;
+            box-shadow:0 7px 18px rgba(0,0,0,.12);
+            backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+        }
+        .unlocked-dropdown-toggle .toggle-left { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+        .unlocked-dropdown-toggle i.chevron { transition:transform .25s ease; }
+        .unlocked-dropdown.open .unlocked-dropdown-toggle i.chevron { transform:rotate(180deg); }
+        .unlocked-dropdown-panel {
+            position:absolute; top:calc(100% + 8px); right:0; width:235px;
+            max-height:0; overflow:hidden; opacity:0;
+            background:rgba(255,255,255,.98); border-radius:16px;
+            box-shadow:0 14px 30px rgba(0,0,0,.20); border:1px solid rgba(255,255,255,.8);
+            transition:max-height .3s ease, opacity .2s ease, padding .3s ease;
+            padding:0 10px;
+        }
+        .unlocked-dropdown.open .unlocked-dropdown-panel { max-height:min(62vh, 430px); opacity:1; padding:10px; overflow-y:auto; }
+        .unlocked-dropdown-panel::-webkit-scrollbar { width:4px; }
+        .unlocked-dropdown-panel::-webkit-scrollbar-thumb { background:#cfcfcf; border-radius:10px; }
+        .dropdown-item { background:#f8faf9; border-radius:12px; padding:9px 8px; margin-bottom:7px; display:flex; align-items:center; gap:8px; cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.06); }
+        .dropdown-item:last-child { margin-bottom:0; }
+        .dropdown-group-title { font-size:10px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; color:#7a8a83; margin:10px 2px 6px; }
+        .dropdown-group-title:first-child { margin-top:0; }
+        .unlocked-dropdown-panel .unlocked-empty-state { color:#7a8a83; padding:6px 4px; }
+        .dropdown-item .mini-icon { width:28px; height:28px; }
+        .dropdown-item .mini-text { font-size:11px; font-weight:700; color:#24332d; white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25; }
+        .dropdown-empty { color:#6d7772; font-size:11px; text-align:center; padding:10px 5px; line-height:1.45; }
+
+
+        /* ===== ÉCRAN TÉLÉCHARGEMENTS ===== */
+        .downloads-view { padding: 0 0 105px; background: #fffdfa; min-height: calc(100vh - 70px); }
+        .downloads-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px 14px; background:#fff; border-bottom:1px solid #eee9e5; }
+        .downloads-header-left { display:flex; align-items:center; gap:16px; min-width:0; }
+        .downloads-title { margin:0; font-size:25px; font-weight:800; color:#d85b2d; }
+        .downloads-header-actions { display:flex; align-items:center; gap:17px; }
+        .downloads-action { position:relative; border:0; background:none; font-size:25px; color:#211714; padding:3px; cursor:pointer; }
+        .downloads-badge { position:absolute; top:-7px; right:-7px; min-width:25px; height:25px; padding:0 6px; border-radius:20px; display:flex; align-items:center; justify-content:center; background:#df632e; color:#fff; font-size:12px; font-weight:800; }
+        .downloads-search-wrap { padding:24px 30px 18px; }
+        .downloads-search { height:66px; border:2px solid #d56b3c; border-radius:24px; background:#fff; display:flex; align-items:center; gap:14px; padding:0 18px; box-shadow:0 3px 10px rgba(100,50,20,.03); }
+        .downloads-search i { color:#5e5551; font-size:25px; }
+        .downloads-search input { border:0; outline:0; width:100%; font-size:19px; color:#4d4542; background:transparent; }
+        .downloads-search input::placeholder { color:#8f8580; }
+        .downloads-filter-icon { color:#aaa5a2 !important; font-size:24px !important; }
+        .downloads-tabs { margin:12px 30px 0; height:82px; display:grid; grid-template-columns:1.05fr 1.1fr 1.1fr 1.1fr; align-items:center; padding:7px; border:2px solid #e8e2dc; border-radius:24px; background:#fff; box-shadow:0 2px 8px rgba(80,50,30,.03); overflow:hidden; }
+        .download-tab { border:0; background:transparent; height:66px; border-radius:18px; display:flex; align-items:center; justify-content:center; gap:9px; color:#675b56; font-size:17px; font-weight:700; cursor:pointer; white-space:nowrap; overflow:hidden; }
+        .download-tab span { overflow:hidden; text-overflow:ellipsis; }
+        .download-tab.active { background:#fff0e9; color:#d65c2c; box-shadow:inset 0 0 0 1px #f1c8b5; }
+        .download-tab i { font-size:19px; flex:0 0 auto; }
+        .downloads-list { display:grid; gap:12px; padding:4px 20px 18px; box-sizing:border-box; }
+        .download-card { display:flex; align-items:center; gap:12px; cursor:pointer; min-height:76px; padding:12px 12px 12px 14px; background:#fff; border:1px solid #eee7e2; border-radius:18px; box-shadow:0 4px 14px rgba(80,45,25,.06); width:100%; box-sizing:border-box; }
+        .download-card-icon { width:48px; height:48px; flex:0 0 48px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:#fff0e9; color:#d85b2d; font-size:22px; }
+        .download-card-info { min-width:0; flex:1; overflow:hidden; }
+        .download-card-title { font-size:16px; font-weight:800; color:#302824; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .download-card-meta { margin-top:5px; font-size:11px; color:#8b817c; white-space:normal; overflow-wrap:break-word; line-height:1.4; }
+        .download-card-delete { width:40px; height:40px; border:0; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 40px; box-sizing:border-box; }
+                .download-card-delete { background:#fff1f1; color:#c94b4b; border:1px solid #f2d4d4; }
+        .download-card:active { transform:scale(.995); }
+        .download-card-delete:active { transform:scale(.94); }
+        .hnf-delete-modal { position:fixed; inset:0; background:rgba(0,0,0,.48); display:none; align-items:center; justify-content:center; z-index:99999; padding:22px; }
+        .hnf-delete-modal.show { display:flex; }
+        .hnf-delete-box { width:min(100%, 390px); background:#fff; border-radius:22px; padding:24px 22px 20px; box-shadow:0 18px 55px rgba(0,0,0,.28); text-align:center; animation:hnfDeleteIn .18s ease-out; }
+        .hnf-delete-icon { width:58px; height:58px; margin:0 auto 14px; border-radius:18px; display:flex; align-items:center; justify-content:center; background:#fff1f1; color:#c94b4b; font-size:25px; }
+        .hnf-delete-title { margin:0 0 9px; font-size:20px; font-weight:800; color:#222; }
+        .hnf-delete-message { margin:0; color:#666; font-size:15px; line-height:1.45; word-break:break-word; }
+        .hnf-delete-actions { display:flex; gap:10px; margin-top:20px; }
+        .hnf-delete-actions button { flex:1; min-height:46px; border-radius:13px; font-size:15px; font-weight:800; cursor:pointer; }
+        .hnf-delete-no { background:#f3f3f3; color:#333; border:1px solid #ddd; }
+        .hnf-delete-yes { background:#c94b4b; color:#fff; border:1px solid #c94b4b; }
+        .hnf-delete-actions button:active { transform:scale(.97); }
+        @keyframes hnfDeleteIn { from { opacity:0; transform:translateY(10px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+        .downloads-empty { min-height:calc(100vh - 390px); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:25px 40px 60px; }
+        .downloads-empty-icon { width:78px; height:78px; display:flex; align-items:center; justify-content:center; margin-bottom:22px; color:#aaa9a8; }
+        .downloads-empty-icon i { font-size:64px; }
+        .downloads-empty h3 { margin:0 0 13px; font-size:25px; font-weight:500; color:#2e2927; }
+        .downloads-empty p { margin:0; max-width:520px; font-size:19px; line-height:1.5; color:#aaa6a3; }
+        .downloads-grid-toggle { position:fixed; right:14px; bottom:132px; width:82px; height:82px; border-radius:50%; border:2px solid #eee9e5; background:rgba(255,255,255,.9); color:#aaa7a5; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(60,40,30,.04); font-size:31px; z-index:90; }
+        @media (max-width:430px) {
+            .downloads-tabs { margin-left:30px; margin-right:30px; }
+            .download-tab { font-size:16px; gap:7px; }
+            .download-tab i { font-size:18px; }
+            .downloads-title { font-size:24px; }
+        }
+
+
+/* ===== NAVIGATION BASSE : 4 RUBRIQUES ===== */
+.bottom-nav{height:78px;box-sizing:border-box;padding:8px 4px 10px;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;align-items:center;background:rgba(255,255,255,.97);position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:420px;z-index:1000;border-top:1px solid #eee7e2;border-radius:18px 18px 0 0;box-shadow:0 -6px 20px rgba(40,25,15,.10)}
+.bottom-nav .nav-item{appearance:none;-webkit-appearance:none;border:0;background:transparent;min-width:0;width:100%;height:62px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:14px;color:#705f58;font-size:13px;font-weight:600;line-height:1;cursor:pointer}
+.bottom-nav .nav-item i{font-size:25px;line-height:1}.bottom-nav .nav-item.active{background:#fff0e9;color:#d65c2c}
+/* Téléchargements : style de la maquette fournie */
+.downloads-view{padding-bottom:95px;background:#fffdfa;min-height:100vh}
+.downloads-header{height:82px;box-sizing:border-box;padding:0 18px 0 30px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid #eee9e5}
+.downloads-header-left{gap:22px}.downloads-header-left .back-btn{border:0;background:none;font-size:31px;color:#2b211e;padding:0;cursor:pointer}
+.downloads-title{font-size:27px;font-weight:800;color:#d85b2d}
+.downloads-header-actions{gap:18px}.downloads-action{font-size:27px}.downloads-badge{min-width:27px;height:27px;font-size:13px}
+.downloads-search-wrap{padding:24px 30px 18px}.downloads-search{height:70px;border:2.5px solid #d56b3c;border-radius:25px;padding:0 20px}.downloads-search i{font-size:26px}.downloads-search input{font-size:20px}
+.downloads-tabs{margin:12px 30px 0;height:84px;padding:7px;border-radius:24px}.download-tab{height:68px;font-size:18px}.download-tab i{font-size:20px}
+.downloads-empty{min-height:calc(100vh - 390px);padding-bottom:80px}.downloads-empty-icon{margin-bottom:22px}.downloads-empty-icon i{font-size:65px}.downloads-empty h3{font-size:25px}.downloads-empty p{font-size:19px}
+.downloads-grid-toggle{bottom:104px;right:14px;width:78px;height:78px;font-size:30px}
+
+/* ===== CORRECTION MOBILE : TÉLÉCHARGEMENTS ===== */
+html, body { width:100%; min-width:0; }
+body { overflow-x:hidden; }
+.app-container { width:100%; max-width:420px; min-width:0; margin:0 auto; }
+.downloads-view { width:100%; box-sizing:border-box; overflow-x:hidden; }
+.downloads-header { padding-left:18px; padding-right:14px; }
+.downloads-header-left { gap:12px; min-width:0; flex:1; }
+.downloads-title { font-size:23px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.downloads-header-actions { gap:10px; flex:0 0 auto; }
+.downloads-action { font-size:22px; }
+.downloads-badge { min-width:23px; height:23px; font-size:11px; top:-5px; right:-5px; }
+.downloads-search-wrap { padding:20px 18px 14px; }
+.downloads-search { height:62px; border-radius:20px; padding:0 15px; gap:10px; }
+.downloads-search i { font-size:22px; }
+.downloads-search input { font-size:16px; min-width:0; }
+.downloads-filter-icon { font-size:21px !important; }
+.downloads-tabs { margin:10px 18px 0; height:68px; padding:5px; border-radius:20px; grid-template-columns:repeat(4,minmax(0,1fr)); gap:2px; }
+.download-tab { height:56px; min-width:0; padding:0 4px; gap:5px; border-radius:15px; font-size:14px; }
+.download-tab i { font-size:16px; }
+.download-tab span { display:block; min-width:0; overflow:visible; text-overflow:clip; white-space:nowrap; }
+.downloads-empty { min-height:calc(100vh - 300px); padding:30px 24px 90px; }
+.downloads-empty-icon i { font-size:58px; }
+.downloads-empty h3 { font-size:22px; }
+.downloads-empty p { font-size:16px; line-height:1.45; }
+.downloads-grid-toggle { width:64px; height:64px; right:12px; bottom:94px; font-size:25px; }
+@media (max-width:360px) {
+  .downloads-title { font-size:20px; }
+  .downloads-header-actions { gap:6px; }
+  .downloads-action { font-size:20px; }
+  .download-tab { font-size:12px; gap:3px; }
+  .download-tab i { font-size:14px; }
+}
+
+/* Lecteur intégré des ressources externes : permet à index1.html de communiquer avec l'application */
+.collectivites-frame-overlay{position:fixed;inset:0;background:#fff;z-index:10000;display:none;flex-direction:column;}
+.collectivites-frame-overlay.open{display:flex;}
+.collectivites-frame-toolbar{height:58px;flex:0 0 58px;display:flex;align-items:center;gap:12px;padding:0 14px;background:#0b7a4b;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.collectivites-frame-back{border:0;background:transparent;color:#fff;font-size:27px;width:42px;height:42px;border-radius:12px;cursor:pointer;}
+.collectivites-frame-title{font-size:17px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.collectivites-frame{width:100%;height:calc(100vh - 58px);border:0;background:#f4f6f9;}
+
+        .ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; fill: currentColor; flex-shrink: 0; }
+        /* Protection anti-copie : la sélection de texte est désactivée partout,
+           sauf dans les vrais champs de saisie (nom, mot de passe, recherche...). */
+        body, .view, .card, .list-item, .item-title, .item-desc { -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        input, textarea { -webkit-user-select: text; -moz-user-select: text; user-select: text; -webkit-touch-callout: default; }
+</style>
+<!-- ===== FIREBASE (projet hnf-acces) : Authentication + Firestore ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDqBM3FPKDKoUfPQR_dj1uyg9XcusQt2U4",
+        authDomain: "hnf-acces.firebaseapp.com",
+        projectId: "hnf-acces",
+        storageBucket: "hnf-acces.firebasestorage.app",
+        messagingSenderId: "974692519107",
+        appId: "1:974692519107:web:e6605abf7fe44108fa6676"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const hnfAuth = firebase.auth();
+    const hnfDb = firebase.firestore();
+</script>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="fa-arrow-left" viewBox="0 0 24 24"><path d="M20 12H4"/><path d="m10.5 5.5-6.5 6.5 6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><line x1="20" y1="12" x2="4" y2="12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+<symbol id="fa-arrow-right" viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="m13.5 5.5 6.5 6.5-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fa-atom" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8"/><ellipse cx="12" cy="12" rx="9.5" ry="4" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="12" rx="9.5" ry="4" fill="none" stroke="currentColor" stroke-width="1.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9.5" ry="4" fill="none" stroke="currentColor" stroke-width="1.6" transform="rotate(120 12 12)"/></symbol>
+<symbol id="fa-bars" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="2.2" rx="1"/><rect x="3" y="11" width="18" height="2.2" rx="1"/><rect x="3" y="17" width="18" height="2.2" rx="1"/></symbol>
+<symbol id="fa-bell" viewBox="0 0 24 24"><path d="M12 2a1.6 1.6 0 0 1 1.6 1.6v.7A6.5 6.5 0 0 1 18.5 11v3.2l1.7 3a1 1 0 0 1-.87 1.5H4.67a1 1 0 0 1-.87-1.5l1.7-3V11A6.5 6.5 0 0 1 10.4 4.3v-.7A1.6 1.6 0 0 1 12 2Z"/><path d="M9.2 19.5a2.8 2.8 0 0 0 5.6 0Z"/></symbol>
+<symbol id="fa-book" viewBox="0 0 24 24"><path d="M4 4.5h7A3 3 0 0 1 14 7.5v12a2.5 2.5 0 0 0-2.5-2.5H4Z"/><path d="M20 4.5h-7A3 3 0 0 0 10 7.5v12a2.5 2.5 0 0 1 2.5-2.5H20Z"/></symbol>
+<symbol id="fa-book-open" viewBox="0 0 24 24"><path d="M12 6.5C10.5 5 7.5 4.5 4 4.7v13.6c3.5-.2 6.5.3 8 1.7 1.5-1.4 4.5-1.9 8-1.7V4.7c-3.5-.2-6.5.3-8 1.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="12" y1="6.5" x2="12" y2="20" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="fa-border-all" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="fa-brain" viewBox="0 0 24 24"><path d="M9.5 3a3.3 3.3 0 0 0-3.3 3.3 3 3 0 0 0-2.2 4.9A3.2 3.2 0 0 0 5.5 17a3.3 3.3 0 0 0 4 3c1.6 0 3-1.3 3-3V6.3A3.3 3.3 0 0 0 9.5 3Z"/><path d="M14.5 3a3.3 3.3 0 0 1 3.3 3.3 3 3 0 0 1 2.2 4.9A3.2 3.2 0 0 1 18.5 17a3.3 3.3 0 0 1-4 3c-1.6 0-3-1.3-3-3V6.3A3.3 3.3 0 0 1 14.5 3Z"/></symbol>
+<symbol id="fa-briefcase" viewBox="0 0 24 24"><rect x="2.5" y="7.5" width="19" height="12.5" rx="1.8"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7" fill="none" stroke="currentColor" stroke-width="1.9"/><rect x="2.5" y="12" width="19" height="2.3" fill="#fff" opacity="0.35"/></symbol>
+<symbol id="fa-building-columns" viewBox="0 0 24 24"><path d="m12 2.5 9.5 5H2.5Z"/><rect x="4" y="9" width="2.2" height="9.5"/><rect x="10.9" y="9" width="2.2" height="9.5"/><rect x="17.8" y="9" width="2.2" height="9.5"/><rect x="2.5" y="19.5" width="19" height="2" rx="0.6"/></symbol>
+<symbol id="fa-bullhorn" viewBox="0 0 24 24"><path d="M3 10.5v3a1.5 1.5 0 0 0 1.5 1.5H6l1 5h2l-.8-5h1.3L18 19V6l-8.5 4H4.5A1.5 1.5 0 0 0 3 10.5Z"/><path d="M20 8.5a4 4 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="fa-calculator" viewBox="0 0 24 24"><rect x="4.5" y="2.5" width="15" height="19" rx="2"/><rect x="6.7" y="4.8" width="10.6" height="4" rx="0.6" fill="#fff"/><circle cx="8" cy="12.3" r="1.1" fill="#fff"/><circle cx="12" cy="12.3" r="1.1" fill="#fff"/><circle cx="16" cy="12.3" r="1.1" fill="#fff"/><circle cx="8" cy="16.2" r="1.1" fill="#fff"/><circle cx="12" cy="16.2" r="1.1" fill="#fff"/><circle cx="16" cy="16.2" r="1.1" fill="#fff"/><circle cx="8" cy="20" r="1.1" fill="#fff"/><circle cx="12" cy="20" r="1.1" fill="#fff"/><circle cx="16" cy="20" r="1.1" fill="#fff"/></symbol>
+<symbol id="fa-chart-pie" viewBox="0 0 24 24"><path d="M11 3.1v9h9A9 9 0 0 0 11 3.1Z"/><path d="M18.9 15.5A9 9 0 1 1 9.5 3.1v9.9Z"/></symbol>
+<symbol id="fa-chart-simple" viewBox="0 0 24 24"><rect x="3" y="13" width="4" height="8" rx="0.8"/><rect x="10" y="8" width="4" height="13" rx="0.8"/><rect x="17" y="3" width="4" height="18" rx="0.8"/></symbol>
+<symbol id="fa-check" viewBox="0 0 24 24"><path d="M4.5 12.5 9.5 18 20 6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fa-check-to-slot" viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="10.5" rx="1.4"/><path d="M3 14h5.3l1.2 1.8h5l1.2-1.8H21" fill="none" stroke="#fff" stroke-width="1.4"/><path d="m9 4 3 2.4L15 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3.5" x2="12" y2="10" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="fa-chevron-down" viewBox="0 0 24 24"><path d="M4.5 8.5 12 16l7.5-7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fa-chevron-right" viewBox="0 0 24 24"><path d="M8.5 4.5 16 12l-7.5 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fa-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="m7.5 12.3 3 3 6-6.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fa-circle-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><rect x="10.8" y="10.2" width="2.4" height="7" rx="1" fill="#fff"/><circle cx="12" cy="7" r="1.4" fill="#fff"/></symbol>
+<symbol id="fa-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="6.5" ry="3.2"/><path d="M2.5 7v4.5c0 1.8 2.9 3.2 6.5 3.2s6.5-1.4 6.5-3.2V7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M2.5 11.5V16c0 1.8 2.9 3.2 6.5 3.2s6.5-1.4 6.5-3.2v-4.5" fill="none" stroke="currentColor" stroke-width="1.8"/><ellipse cx="17" cy="13.5" rx="4.5" ry="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12.5 13.5V17c0 1.3 2 2.3 4.5 2.3s4.5-1 4.5-2.3v-3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="fa-download" viewBox="0 0 24 24"><path d="M12 3v11"/><path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="18" width="16" height="2.3" rx="1"/></symbol>
+<symbol id="fa-earth-africa" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 3c1 1.5-.5 2 0 3.3s2.4 1 2 2.6-2 1.6-1.3 3 3 .8 3 2.6-1.7 1.8-1 3.4 2 2.7 2 2.7M3 13c1.5.3 2-1 3.3-.6s.7 2 2.2 2.3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
+<symbol id="fa-file-lines" viewBox="0 0 24 24"><path d="M6 2.5h8l5 5V21a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z"/><path d="M14 2.5V7h5" fill="none" stroke="#fff" stroke-width="1"/><rect x="8" y="11" width="8" height="1.6" rx="0.8" fill="#fff"/><rect x="8" y="14.4" width="8" height="1.6" rx="0.8" fill="#fff"/><rect x="8" y="17.8" width="5" height="1.6" rx="0.8" fill="#fff"/></symbol>
+<symbol id="fa-file-pdf" viewBox="0 0 24 24"><path d="M6 2.5h8l5 5V21a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z"/><path d="M14 2.5V7h5" fill="none" stroke="#fff" stroke-width="1"/><text x="12" y="17.5" font-size="6" font-weight="700" fill="#fff" text-anchor="middle" font-family="Arial">PDF</text></symbol>
+<symbol id="fa-flag" viewBox="0 0 24 24"><path d="M5 2.5v19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 3.5c3-1.4 5.5.6 8.5-.8s5.5.6 5.5.6v9.4s-2.5-2-5.5-.6-5.5-.8-8.5.6Z"/></symbol>
+<symbol id="fa-flask" viewBox="0 0 24 24"><path d="M9.5 2.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10.2 3v6.6L4.6 19a2 2 0 0 0 1.7 3h11.4a2 2 0 0 0 1.7-3l-5.6-9.4V3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M7.3 15.5h9.4" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="fa-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.9"/><ellipse cx="12" cy="12" rx="4" ry="9.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="2.5" y1="12" x2="21.5" y2="12" stroke="currentColor" stroke-width="1.6"/><line x1="3.6" y1="7.5" x2="20.4" y2="7.5" stroke="currentColor" stroke-width="1.3"/><line x1="3.6" y1="16.5" x2="20.4" y2="16.5" stroke="currentColor" stroke-width="1.3"/></symbol>
+<symbol id="fa-graduation-cap" viewBox="0 0 24 24"><path d="m12 3 11 5-11 5L1 8Z"/><path d="M6 11.5V16c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 8v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="fa-grip" viewBox="0 0 24 24"><circle cx="8" cy="5.5" r="1.7"/><circle cx="16" cy="5.5" r="1.7"/><circle cx="8" cy="12" r="1.7"/><circle cx="16" cy="12" r="1.7"/><circle cx="8" cy="18.5" r="1.7"/><circle cx="16" cy="18.5" r="1.7"/></symbol>
+<symbol id="fa-handshake-angle" viewBox="0 0 24 24"><path d="M2.5 12.5 6 9l3.3 2.7a1.7 1.7 0 0 0 2.4-.2l.2-.2a1.6 1.6 0 0 0-.2-2.2L8.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m21.5 12.5-3.5-3.5-3.3 2.7a1.7 1.7 0 0 1-2.4-.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m6 9-3.5 3.5 4 4a2 2 0 0 0 2.8 0l.7-.7 1 1a1.8 1.8 0 0 0 2.5 0 1.8 1.8 0 0 0 0-2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m18 9 3.5 3.5-4 4a2 2 0 0 1-2.8 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="fa-hospital" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M8 8V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="11" y="11" width="2" height="7" fill="#fff"/><rect x="8.5" y="13.5" width="7" height="2" fill="#fff"/></symbol>
+<symbol id="fa-house" viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h6v-5h2v5h6v-8h3z"/></symbol>
+<symbol id="fa-landmark" viewBox="0 0 24 24"><path d="m12 2.5 9.5 5H2.5Z"/><rect x="4" y="9" width="2.2" height="8.5"/><rect x="10.9" y="9" width="2.2" height="8.5"/><rect x="17.8" y="9" width="2.2" height="8.5"/><rect x="2.5" y="18.5" width="19" height="2" rx="0.6"/><rect x="2.5" y="21" width="19" height="1.3" rx="0.5"/></symbol>
+<symbol id="fa-language" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M2.5 12h19M12 2.5a14 14 0 0 1 0 19 14 14 0 0 1 0-19Z" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+<symbol id="fa-list-check" viewBox="0 0 24 24"><path d="m3.5 6 1.6 1.6L8 4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m3.5 13 1.6 1.6L8 11.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="19" width="1.8" height="1.8" rx="0.4"/><rect x="10.5" y="5" width="10" height="2.2" rx="1"/><rect x="10.5" y="12" width="10" height="2.2" rx="1"/><rect x="10.5" y="19" width="10" height="2.2" rx="1"/></symbol>
+<symbol id="fa-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M7.5 10.5V7.2a4.5 4.5 0 0 1 9 0v3.3" fill="none" stroke="currentColor" stroke-width="2.2"/></symbol>
+<symbol id="fa-magnifying-glass" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><line x1="15.3" y1="15.3" x2="21" y2="21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+<symbol id="fa-microphone" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M6 10.5v1a6 6 0 0 0 12 0v-1" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><line x1="12" y1="17.5" x2="12" y2="21.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><line x1="8" y1="21.5" x2="16" y2="21.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+<symbol id="fa-microscope" viewBox="0 0 24 24"><rect x="5" y="20" width="14" height="2" rx="1"/><path d="M9 20v-3.5a4 4 0 0 1 4-4h1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="9.5" y="4" width="4" height="7" rx="1.5"/><rect x="7.5" y="9.5" width="8" height="2.3" rx="1"/><line x1="14" y1="6" x2="19" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="fa-mobile-screen-button" viewBox="0 0 24 24"><rect x="6.5" y="2" width="11" height="20" rx="2.2"/><line x1="6.5" y1="18" x2="17.5" y2="18" stroke="#fff" stroke-width="1"/><circle cx="12" cy="19.8" r="1" fill="#fff"/></symbol>
+<symbol id="fa-newspaper" viewBox="0 0 24 24"><rect x="2.5" y="5" width="14" height="14" rx="1.3"/><rect x="5" y="7.5" width="9" height="3.4" rx="0.5" fill="#fff"/><rect x="5" y="12.2" width="9" height="1.4" rx="0.5" fill="#fff"/><rect x="5" y="14.6" width="9" height="1.4" rx="0.5" fill="#fff"/><path d="M16.5 8h3.4a1.6 1.6 0 0 1 1.6 1.6v9a2.4 2.4 0 0 1-2.4 2.4H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+<symbol id="fa-plus" viewBox="0 0 24 24"><rect x="10.6" y="3" width="2.8" height="18" rx="1"/><rect x="3" y="10.6" width="18" height="2.8" rx="1"/></symbol>
+<symbol id="fa-road" viewBox="0 0 24 24"><path d="M8.5 2.5 4 21.5h4L11.5 2.5Z"/><path d="M15.5 2.5 20 21.5h-4L12.5 2.5Z"/><rect x="11" y="4" width="2" height="2.6" fill="#fff"/><rect x="11" y="9.5" width="2" height="2.6" fill="#fff"/><rect x="11" y="15" width="2" height="2.6" fill="#fff"/></symbol>
+<symbol id="fa-scale-balanced" viewBox="0 0 24 24"><line x1="12" y1="2.5" x2="12" y2="21" stroke="currentColor" stroke-width="1.8"/><line x1="4" y1="6" x2="20" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="9.5" y="19.5" width="5" height="1.8" rx="0.6"/><path d="M4 6 1.5 11.5a2.5 2.5 0 0 0 5 0Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 6l-2.5 5.5a2.5 2.5 0 0 0 5 0Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+<symbol id="fa-shield-halved" viewBox="0 0 24 24"><path d="M12 2.3 20 5.5v6c0 5-3.4 8.6-8 10.2-4.6-1.6-8-5.2-8-10.2v-6Z"/><path d="M12 2.3v19.4" stroke="#fff" stroke-width="1.4"/></symbol>
+<symbol id="fa-square-question" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9.3 9a2.7 2.7 0 1 1 4 2.3c-.9.6-1.3 1-1.3 2.1" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.2" fill="#fff"/></symbol>
+<symbol id="fa-star" viewBox="0 0 24 24"><path d="M12 2.5 15 9l7 1-5.1 4.9L18.2 22 12 18.3 5.8 22 7.1 14.9 2 10l7-1Z"/></symbol>
+<symbol id="fa-trash" viewBox="0 0 24 24"><path d="M5 7h14l-1.1 13.1a2 2 0 0 1-2 1.9H8.1a2 2 0 0 1-2-1.9Z"/><path d="M9 7V4.8A1.8 1.8 0 0 1 10.8 3h2.4A1.8 1.8 0 0 1 15 4.8V7"/><rect x="3" y="4.6" width="18" height="2.2" rx="1"/></symbol>
+<symbol id="fa-tree" viewBox="0 0 24 24"><path d="M12 2 6.5 10h3L5 17h5v5h4v-5h5l-4.5-7h3Z"/></symbol>
+<symbol id="fa-trophy" viewBox="0 0 24 24"><path d="M7 3h10v6a5 5 0 0 1-10 0Z"/><path d="M7 5H3.5v2a3.5 3.5 0 0 0 3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M17 5h3.5v2A3.5 3.5 0 0 1 17 10.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="13.5" width="3" height="4" /><rect x="7" y="19" width="10" height="2" rx="0.7"/><rect x="8.5" y="17.3" width="7" height="2" rx="0.7"/></symbol>
+<symbol id="fa-unlock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M7.5 10.5V7.2a4.5 4.5 0 0 1 8.6-1.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="fa-unlock-keyhole" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M7.5 10.5V7.2a4.5 4.5 0 0 1 8.6-1.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="15" r="1.6" fill="#fff"/></symbol>
+<symbol id="fa-user" viewBox="0 0 24 24"><circle cx="12" cy="7.2" r="4"/><path d="M4 20.5a8 8 0 0 1 16 0Z"/></symbol>
+<symbol id="fa-user-graduate" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0Z"/><path d="m4 9.5 8-3 8 3-8 3Z"/><path d="M6.5 10.6v3.1c0 1 2.5 1.9 5.5 1.9s5.5-.9 5.5-1.9v-3.1"/></symbol>
+<symbol id="fa-whatsapp" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 16.3 6.7 20l3.8-1.2a7.3 7.3 0 0 0 10.9-6.3A7.3 7.3 0 1 0 8 16.3Z" fill="none" stroke="#fff" stroke-width="0"/><path d="M9.2 8.5c.2-.4.4-.4.6-.4h.5c.2 0 .4 0 .6.4.2.5.7 1.6.7 1.7.1.1.1.3 0 .4-.1.2-.2.3-.3.4l-.4.5c-.1.1-.2.3-.1.5.2.3.7 1.1 1.5 1.8.9.8 1.6 1.1 1.9 1.2.2.1.4.1.5-.1l.5-.6c.1-.2.3-.2.5-.1l1.6.8c.2.1.3.1.4.3.1.2.1.9-.2 1.3-.3.5-1.2 1-2 1.1-.6 0-1.4 0-3.5-1-2.6-1.2-4.3-3.9-4.4-4.1-.1-.2-.9-1.3-.9-2.4 0-1.2.6-1.7.8-2Z" fill="#25D366"/></symbol>
+<symbol id="fa-xmark" viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+<symbol id="fa-comment-sms" viewBox="0 0 24 24"><path d="M4 4.5h16a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H9l-4.2 3.3A.8.8 0 0 1 3.5 20V6a1.5 1.5 0 0 1 1.5-1.5Z"/><rect x="6.5" y="9" width="2.2" height="4.2" rx="0.6" fill="#fff"/><rect x="10.9" y="9" width="2.2" height="4.2" rx="0.6" fill="#fff"/><rect x="15.3" y="9" width="2.2" height="4.2" rx="0.6" fill="#fff"/></symbol>
+<symbol id="fa-eye" viewBox="0 0 24 24"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="fa-eye-slash" viewBox="0 0 24 24"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 3.5l17 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+</svg>
+
+
+<div class="app-container">
+
+    <!-- MENU LATÉRAL -->
+    <div class="side-menu-overlay" id="side-menu-overlay" onclick="toggleMenu()"></div>
+    <div class="side-menu" id="side-menu">
+        <div class="side-menu-header">
+            <div class="side-avatar"><svg class="ico"><use href="#fa-user"></use></svg></div>
+            <h3 id="menu-name" style="margin: 0; font-size: 16px;">Non Connecté</h3>
+            <p id="menu-phone" style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.8;">Identifiez-vous</p>
+        </div>
+        <div class="side-menu-content">
+            <a href="#" class="side-nav-item" onclick="toggleMenu(); goTo('view-home')"><svg class="ico"><use href="#fa-house"></use></svg> Accueil</a>
+            <a href="#" class="side-nav-item" onclick="alert('Vos QCM autorisés apparaîtront ici.')"><svg class="ico"><use href="#fa-unlock-keyhole"></use></svg> Mes QCM débloqués</a>
+            <a href="#" class="side-nav-item" onclick="alert('Vos statistiques de QCM.')"><svg class="ico"><use href="#fa-chart-simple"></use></svg> Mes résultats</a>
+            <div style="height: 1px; background: #eee; margin: 15px 0;"></div>
+            <a href="#" class="side-nav-item" onclick="alert('Ouverture de WhatsApp...')"><svg class="ico" style="color: #25D366;"><use href="#fa-whatsapp"></use></svg> Assistance WhatsApp</a>
+            <div style="height: 1px; background: #eee; margin: 15px 0;"></div>
+            <a href="#" class="side-nav-item" id="logout-link" style="display:none;" onclick="toggleMenu(); processLogout();"><svg class="ico"><use href="#fa-xmark"></use></svg> Se déconnecter</a>
+        </div>
+    </div>
+
+    <!-- ACCUEIL -->
+    <div id="view-home" class="view active">
+        <!-- Header Accueil -->
+        <div class="header">
+            <div class="header-left">
+                <svg class="ico menu-icon" onclick="toggleMenu()"><use href="#fa-bars"></use></svg>
+                <h1 class="header-title">HAUT NIVEAU FORMATION</h1>
+            </div>
+            <div class="header-right">
+                <div class="notification" onclick="alert('Aucune nouvelle notification.')">
+                    <svg class="ico"><use href="#fa-bell"></use></svg>
+                    <div class="notif-badge">3</div>
+                </div>
+                <button class="profile-btn" id="home-profile-icon" onclick="handleProfileClick()">
+                    <svg class="ico"><use href="#fa-user"></use></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bannière Modifiée (Texte à gauche, Scroll dynamique à droite) -->
+        <div class="banner-wrapper">
+            <div class="banner">
+                <div class="banner-content">
+                    
+                    <!-- Contenu de la bannière -->
+                    <div class="banner-left">
+                        <div class="banner-topline">
+                            <div class="badge-star"><svg class="ico"><use href="#fa-star"></use></svg> HAUT NIVEAU</div>
+                            <div class="banner-right">
+                                <div class="unlocked-dropdown" id="unlocked-dropdown">
+                                    <button class="unlocked-dropdown-toggle" type="button" onclick="toggleUnlockedDropdown(event)">
+                                        <span class="toggle-left"><svg class="ico"><use href="#fa-unlock-keyhole"></use></svg> Concours débloqués</span>
+                                        <svg class="ico chevron"><use href="#fa-chevron-down"></use></svg>
+                                    </button>
+                                    <div class="unlocked-dropdown-panel" id="unlocked-items-container">
+                                        <div class="dropdown-empty">Connectez-vous ou abonnez-vous<br>pour voir vos accès</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h2>Préparez votre<br><span>réussite</span><br>aux concours</h2>
+                        <p>Cours • QCM • Documents</p>
+                        <div class="banner-buttons-row">
+                            <button class="btn-start" onclick="goTo('view-categories', 'Concours Professionnels')">
+                                <svg class="ico"><use href="#fa-graduation-cap"></use></svg> Commencer
+                            </button>
+                            <button class="btn-start" onclick="goTo('view-tarifs', 'Nos tarifs')">
+                                <svg class="ico"><use href="#fa-shield-halved"></use></svg> Nos tarifs
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Nos espaces (Grille Réorganisée) -->
+        <div class="section-header">
+            <h2 class="section-title"><svg class="ico" style="color:var(--primary)"><use href="#fa-border-all"></use></svg> Nos espaces</h2>
+            <a href="#" class="see-all">Voir tout <svg class="ico" style="font-size:10px;"><use href="#fa-chevron-right"></use></svg></a>
+        </div>
+        
+        <div class="grid-container">
+            <!-- 1. Concours direct -->
+            <div class="grid-item card-1" onclick="goTo('view-concours-directs', 'Concours Direct')">
+                <div class="icon-box"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></div>
+                <h3 class="item-title">Concours<br>direct</h3>
+                <p class="item-desc">Tous les concours directs de l'État.</p>
+            </div>
+            
+            <!-- 2. Concours professionnel -->
+            <div class="grid-item card-2" onclick="goTo('view-categories', 'Concours Professionnels')">
+                <div class="icon-box"><svg class="ico"><use href="#fa-briefcase"></use></svg></div>
+                <h3 class="item-title">Concours<br>professionnel</h3>
+                <p class="item-desc">Pour le personnel de la fonction publique.</p>
+            </div>
+            
+            <!-- 3. Concours des collectivités -->
+            <div class="grid-item card-3" onclick="openCollectivites()">
+                <div class="icon-box"><svg class="ico"><use href="#fa-building-columns"></use></svg></div>
+                <h3 class="item-title">Concours des<br>collectivités</h3>
+                <p class="item-desc">Mairies et régions.</p>
+            </div>
+            
+            <!-- 4. Culture générale & actualité -->
+            <div class="grid-item card-6 culture-space" onclick="goTo('view-culture-generale', 'Culture générale et actualité')">
+                <div class="icon-box"><svg class="ico"><use href="#fa-globe"></use></svg></div>
+                <h3 class="item-title">Culture générale<br>& actualité</h3>
+                <p class="item-desc">QCM, connaissances et actualités.</p>
+            </div>
+
+            <!-- 5. Accompagnement final -->
+            <div class="grid-item card-5" onclick="goTo('view-accompagnement-final', 'Accompagnement final')">
+                <div class="icon-box"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <h3 class="item-title">Accompagnement<br>final</h3>
+                <p class="item-desc">Préparation intensive et astuces.</p>
+            </div>
+
+            <!-- 6. Autres services -->
+            <div class="grid-item card-4" onclick="alert('Autres ressources - Bientôt disponible')">
+                <div class="icon-box"><svg class="ico"><use href="#fa-plus"></use></svg></div>
+                <h3 class="item-title">Autres<br>services</h3>
+                <p class="item-desc">Accédez à d'autres ressources et outils.</p>
+            </div>
+        </div>
+
+        <!-- Actualités -->
+        <div class="section-header">
+            <h2 class="section-title"><svg class="ico" style="color:var(--primary)"><use href="#fa-bullhorn"></use></svg> Actualités</h2>
+            <a href="#" class="see-all">Voir tout <svg class="ico" style="font-size:10px;"><use href="#fa-chevron-right"></use></svg></a>
+        </div>
+        <div class="news-wrapper">
+            <div class="news-card news-category-card" onclick="alert('Info sur concours : contenu à venir.')">
+                <div class="news-icon-circle"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></div>
+                <div class="news-content">
+                    <h4>Info sur concours</h4>
+                </div>
+                <div class="chevron"><svg class="ico"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="news-card news-category-card" onclick="alert('Actualité nationale : contenu à venir.')">
+                <div class="news-icon-circle" style="color:#2874c6; box-shadow:0 2px 5px rgba(40,116,198,0.1);"><svg class="ico"><use href="#fa-flag"></use></svg></div>
+                <div class="news-content">
+                    <h4>Actualité nationale</h4>
+                </div>
+                <div class="chevron"><svg class="ico"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="news-card news-category-card" onclick="alert('Actualité internationale : contenu à venir.')">
+                <div class="news-icon-circle" style="color:#7c3aed; box-shadow:0 2px 5px rgba(124,58,237,0.1);"><svg class="ico"><use href="#fa-earth-africa"></use></svg></div>
+                <div class="news-content">
+                    <h4>Actualité internationale</h4>
+                </div>
+                <div class="chevron"><svg class="ico"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER SECONDAIRE -->
+    <div class="sub-header" id="secondary-header" style="display: none;">
+        <button class="back-btn" onclick="goBack()"><svg class="ico"><use href="#fa-arrow-left"></use></svg></button>
+        <h1 class="sub-header-title" id="global-header-title">Titre</h1>
+    </div>
+
+    <!-- VUE 2 : CATÉGORIES -->
+    <div id="view-categories" class="view">
+        <div class="list-container" id="categories-container">
+            <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez votre domaine :</p>
+            <!-- Généré par JS -->
+        </div>
+    </div>
+
+    <!-- VUE : HUB CONCOURS (rubriques principales) -->
+    <div id="view-concours-hub" class="view">
+        <div class="list-container">
+            <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez une rubrique :</p>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final Pro', '#')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <div class="list-text">Accompagnement final Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final', 'https://concourscomplet.vercel.app/CD/AFD/indexAFD.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <div class="list-text">Accompagnement final Direct<br><span style="font-size:10px;font-weight:500;color:#999;">Concours direct</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="goTo('view-categories', 'Concours Professionnels')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-briefcase"></use></svg></div>
+                <div class="list-text">Concours professionnel<br><span style="font-size:10px;font-weight:500;color:#999;">Pour le personnel de la fonction publique</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="goTo('view-concours-directs', 'Concours Direct')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></div>
+                <div class="list-text">Concours direct<br><span style="font-size:10px;font-weight:500;color:#999;">Tous les concours directs de l'État</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="openCollectivites()">
+                <div class="list-icon"><svg class="ico"><use href="#fa-building-columns"></use></svg></div>
+                <div class="list-text">Concours des collectivités territoriales<br><span style="font-size:10px;font-weight:500;color:#999;">Mairies et régions</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale Pro', '#')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
+                <div class="list-text">Culture générale Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale', 'https://concourscomplet.vercel.app/CD/CGD/indexCGD.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
+                <div class="list-text">Culture générale Direct<br><span style="font-size:10px;font-weight:500;color:#999;">QCM, connaissances et actualités</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="openSpecialFormationWhatsApp()">
+                <div class="list-icon"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></div>
+                <div class="list-text">Formation spéciale et intensive<br><span style="font-size:10px;font-weight:500;color:#999;">Sur demande, via WhatsApp</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VUE : CONCOURS DIRECTS -->
+    <div id="view-concours-directs" class="view">
+        <div class="list-container">
+            <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Matières et Accompagnement :</p>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final', 'https://concourscomplet.vercel.app/CD/AFD/indexAFD.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <div class="list-text">Accompagnement final Direct<br><span style="font-size:10px;font-weight:500;color:#999;">Préparation intensive et astuces</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale', 'https://concourscomplet.vercel.app/CD/CGD/indexCGD.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
+                <div class="list-text">Culture générale Direct<br><span style="font-size:10px;font-weight:500;color:#999;">Actualités et connaissances</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Français', 'https://concourscomplet.vercel.app/CD/Français/indexFrançais.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-language"></use></svg></div>
+                <div class="list-text">Français<br><span style="font-size:10px;font-weight:500;color:#999;">Grammaire, orthographe, conjugaison</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Littérature', 'https://concourscomplet.vercel.app/CD/Littérature/indexLittérature.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-book"></use></svg></div>
+                <div class="list-text">Littérature<br><span style="font-size:10px;font-weight:500;color:#999;">Auteurs, courants, œuvres</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Mathématiques', 'https://concourscomplet.vercel.app/CD/Maths/indexMaths.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-calculator"></use></svg></div>
+                <div class="list-text">Mathématiques<br><span style="font-size:10px;font-weight:500;color:#999;">Algèbre, géométrie, probabilités</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('SVT', 'https://concourscomplet.vercel.app/CD/SVT/indexSVT.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-microscope"></use></svg></div>
+                <div class="list-text">SVT<br><span style="font-size:10px;font-weight:500;color:#999;">Sciences de la Vie et de la Terre</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Psychotechnique', 'https://concourscomplet.vercel.app/CD/Psycho/indexPsycho.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-brain"></use></svg></div>
+                <div class="list-text">Psychotechnique<br><span style="font-size:10px;font-weight:500;color:#999;">Tests de logique et d'aptitude</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Physique/Chimie', 'https://concourscomplet.vercel.app/CD/PC/indexPC.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-atom"></use></svg></div>
+                <div class="list-text">Physique / Chimie<br><span style="font-size:10px;font-weight:500;color:#999;">Mécanique, réactions, atomes</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Histoire/Géographie', 'https://concourscomplet.vercel.app/CD/HG/indexHG.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-earth-africa"></use></svg></div>
+                <div class="list-text">Histoire / Géographie<br><span style="font-size:10px;font-weight:500;color:#999;">Repères historiques et géographiques</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Économie', 'https://concourscomplet.vercel.app/CD/Économie/indexÉconomie.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-coins"></use></svg></div>
+                <div class="list-text">Économie<br><span style="font-size:10px;font-weight:500;color:#999;">Notions économiques essentielles</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Sociologie', 'https://concourscomplet.vercel.app/CD/Sociologie/indexSociologie.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-user"></use></svg></div>
+                <div class="list-text">Sociologie<br><span style="font-size:10px;font-weight:500;color:#999;">Société, institutions, comportements</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Droit', 'https://concourscomplet.vercel.app/CD/Droit/indexDroit.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-scale-balanced"></use></svg></div>
+                <div class="list-text">Droit<br><span style="font-size:10px;font-weight:500;color:#999;">Notions juridiques et institutionnelles</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Philosophie', 'https://concourscomplet.vercel.app/CD/Philosophie/indexPhilosophie.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-square-question"></use></svg></div>
+                <div class="list-text">Philosophie<br><span style="font-size:10px;font-weight:500;color:#999;">Raisonnement et culture philosophique</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VUE : ACCOMPAGNEMENT FINAL (choix Pro / Direct) -->
+    <div id="view-accompagnement-final" class="view">
+        <div class="list-container">
+            <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez une rubrique :</p>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final Pro', '#')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <div class="list-text">Accompagnement final Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Accompagnement final', 'https://concourscomplet.vercel.app/CD/AFD/indexAFD.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <div class="list-text">Accompagnement final Direct<br><span style="font-size:10px;font-weight:500;color:#999;">Concours direct</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VUE : CULTURE GÉNÉRALE ET ACTUALITÉ (choix Pro / Direct) -->
+    <div id="view-culture-generale" class="view">
+        <div class="list-container">
+            <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez une rubrique :</p>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale Pro', '#')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
+                <div class="list-text">Culture générale Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale', 'https://concourscomplet.vercel.app/CD/CGD/indexCGD.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
+                <div class="list-text">Culture générale Directe<br><span style="font-size:10px;font-weight:500;color:#999;">Concours direct</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VUE : SOUS-RUBRIQUES DES COLLECTIVITÉS -->
+    <div id="view-collectivites" class="view">
+        <div class="list-container">
+            <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez votre domaine :</p>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Administration Générale', 'https://concourscomplet.vercel.app/CT/index1.html')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-landmark"></use></svg></div>
+                <div class="list-text">Administration Générale<br><span style="font-size:10px;font-weight:500;color:#999;">Concours et ressources d'administration</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+
+            <div class="list-item collectivite-option" onclick="checkAccess('Services financiers', '#')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-coins"></use></svg></div>
+                <div class="list-text">Services financiers<br><span style="font-size:10px;font-weight:500;color:#999;">Concours et ressources financiers</span></div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VUE 3 : SOUS-RUBRIQUES -->
+    <div id="view-subcategories" class="view">
+        <div class="list-container">
+            <h2 style="font-size: 14px; font-weight: 700; margin: 0 0 15px 0; color: var(--text-gray); text-transform: uppercase;">Choix du QCM</h2>
+            <div id="subcategories-container">
+                <!-- Généré par JS -->
+            </div>
+            
+            <!-- Bouton permanent pour les documents -->
+            <div class="doc-item list-item" onclick="checkAccess('Documents Essentiels', '#')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-file-pdf"></use></svg></div>
+                <div class="list-text">Documents et textes essentiels<br><span style="font-size: 10px; font-weight: 500; color: #999;">Textes de loi, PDF et références</span></div>
+                <div class="chevron"><svg class="ico"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VUE 4 : AUTHENTIFICATION -->
+    <div id="view-auth" class="view">
+        <div class="auth-container">
+            <div class="tabs">
+                <div class="tab" id="tab-login" onclick="switchAuthTab('login')">Se connecter</div>
+                <div class="tab active" id="tab-signup" onclick="switchAuthTab('signup')">S'inscrire</div>
+            </div>
+
+            <!-- Inscription -->
+            <div id="form-signup" class="auth-form active">
+                <div class="row">
+                    <div class="form-group" style="flex: 1;"><input type="text" id="signup-nom" class="form-control" placeholder="Nom"></div>
+                    <div class="form-group" style="flex: 1;"><input type="text" id="signup-prenom" class="form-control" placeholder="Prénom"></div>
+                </div>
+                <div class="row">
+                    <div class="form-group" style="flex: 1;"><input type="text" id="signup-ville" class="form-control" placeholder="Ville"></div>
+                    <div class="form-group" style="flex: 1;">
+                        <select id="signup-sexe" class="form-control" style="color: #666;">
+                            <option>Sexe</option><option>Homme</option><option>Femme</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><input type="tel" id="signup-whatsapp" class="form-control" placeholder="Numéro WhatsApp"></div>
+                <div class="form-group password-wrap"><input type="password" id="signup-password" class="form-control" placeholder="Mot de passe"><button type="button" class="pw-toggle" onclick="togglePassword('signup-password', this)" aria-label="Afficher le mot de passe"><svg class="ico"><use href="#fa-eye"></use></svg></button></div>
+                <button class="btn-primary btn-yellow" onclick="processSignup()">Créer mon compte</button>
+            </div>
+
+            <!-- Connexion -->
+            <div id="form-login" class="auth-form">
+                <div class="form-group"><input type="tel" id="login-whatsapp" class="form-control" placeholder="Numéro WhatsApp"></div>
+                <div class="form-group password-wrap"><input type="password" id="login-password" class="form-control" placeholder="Mot de passe"><button type="button" class="pw-toggle" onclick="togglePassword('login-password', this)" aria-label="Afficher le mot de passe"><svg class="ico"><use href="#fa-eye"></use></svg></button></div>
+                <button class="btn-primary" id="login-submit-btn" onclick="processLogin()">Se connecter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VUE : TÉLÉCHARGEMENTS -->
+    <div id="view-downloads" class="view">
+        <div class="downloads-view">
+            <div class="downloads-header">
+                <div class="downloads-header-left">
+                    <button class="back-btn" onclick="goBack()" aria-label="Retour"><svg class="ico"><use href="#fa-arrow-left"></use></svg></button>
+                    <h1 class="downloads-title">Téléchargements</h1>
+                </div>
+                <div class="downloads-header-actions"><span id="downloads-badge" class="downloads-badge" style="display:none;">0</span></div>
+            </div>
+
+            <div class="downloads-search-wrap">
+                <div class="downloads-search">
+                    <svg class="ico"><use href="#fa-magnifying-glass"></use></svg>
+                    <input id="downloads-search-input" type="search" placeholder="Rechercher un téléchargement..." oninput="filterDownloads()">
+                    <svg class="ico downloads-filter-icon"><use href="#fa-list-check"></use></svg>
+                </div>
+            </div>
+
+            <div class="downloads-tabs" role="tablist" aria-label="Types de téléchargements">
+                <button class="download-tab active" data-filter="all" onclick="setDownloadFilter('all', this)"><svg class="ico"><use href="#fa-grip"></use></svg><span>Tous</span></button>
+                <button class="download-tab" data-filter="qcm" onclick="setDownloadFilter('qcm', this)"><svg class="ico"><use href="#fa-square-question"></use></svg><span>QCM</span></button>
+                <button class="download-tab" data-filter="cours" onclick="setDownloadFilter('cours', this)"><svg class="ico"><use href="#fa-book-open"></use></svg><span>Cours</span></button>
+                <button class="download-tab" data-filter="actualite" onclick="setDownloadFilter('actualite', this)"><svg class="ico"><use href="#fa-newspaper"></use></svg><span>Actualité</span></button>
+            </div>
+
+            <div id="downloads-list" class="downloads-list"></div>
+
+            <div id="downloads-empty" class="downloads-empty">
+                <div class="downloads-empty-icon"><svg class="ico"><use href="#fa-check-to-slot"></use></svg></div>
+                <h3 id="downloads-empty-title">Aucun téléchargement</h3>
+                <p id="downloads-empty-text">Téléchargez des cours ou des tests pour les consulter sans connexion.</p>
+            </div>
+
+            <button class="downloads-grid-toggle" onclick="alert('Affichage en grille bientôt disponible.')" aria-label="Changer l'affichage">
+                <svg class="ico"><use href="#fa-grip"></use></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- VUE 5 : PROFIL -->
+    <div id="view-profile" class="view">
+        <div class="profile-card">
+            <div class="avatar-large"><svg class="ico"><use href="#fa-user"></use></svg></div>
+            <h2 id="profile-name" style="margin:0; font-size: 18px; font-weight: 700; color: var(--text-dark);">Non connecté</h2>
+            <p id="profile-phone" style="color:var(--text-gray); margin:5px 0 0 0; font-size: 13px;"></p>
+            <div class="badge badge-inactive" id="profile-status">Statut : Compte Inactif</div>
+        </div>
+
+        <div class="payment-section">
+            <div class="payment-head">
+                <div>
+                    <span class="payment-kicker">ABONNEMENT</span>
+                    <h3><svg class="ico"><use href="#fa-shield-halved"></use></svg> Activez votre accès</h3>
+                    <p>Choisissez votre formule puis effectuez le paiement.</p>
+                </div>
+            </div>
+
+            <div class="sub-plans-list">
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></span> Accompagnement final Pro</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">4 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Accompagnement final Pro','4 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></span> Accompagnement final Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">3 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Accompagnement final Direct','3 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-briefcase"></use></svg></span> Concours Professionnel</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">20 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Professionnel (Annuel)','20 000 FCFA')">Choisir</button>
+                        </div>
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">5 000 <small>FCFA / Mois</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Professionnel (Mensuel)','5 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-road"></use></svg></span> Concours Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">10 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Direct','10 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-landmark"></use></svg></span> Concours collectivités territoriales</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">15 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours collectivités territoriales','15 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-globe"></use></svg></span> Culture générale Pro</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">10 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Culture générale Pro','10 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-globe"></use></svg></span> Culture générale Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">4 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Culture générale Direct','4 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></span> Formation spéciale et intensive</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">Sur demande</span>
+                            <button class="btn-choose whatsapp" onclick="openSpecialFormationWhatsApp()">
+                                <svg class="ico" style="vertical-align:-2px; font-size:11px; margin-right:3px;"><use href="#fa-whatsapp"></use></svg>Contacter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-note"><svg class="ico"><use href="#fa-circle-info"></use></svg> Après le paiement, envoyez la capture de votre reçu pour l'activation.</div>
+        </div>
+
+        <button class="btn-whatsapp" onclick="alert('Simulation : Ouverture de WhatsApp pour l\'envoi de la capture...')">
+            <svg class="ico" style="font-size: 20px;"><use href="#fa-whatsapp"></use></svg> Envoyer ma capture de paiement
+        </button>
+    </div>
+
+    <!-- VUE : MOYENS DE PAIEMENT -->
+    <!-- VUE : NOS TARIFS (accessible depuis le bouton de la bannière d'accueil) -->
+    <div id="view-tarifs" class="view">
+        <div class="payment-section" style="margin-top:20px;">
+            <div class="payment-head">
+                <div>
+                    <span class="payment-kicker">ABONNEMENT</span>
+                    <h3><svg class="ico"><use href="#fa-shield-halved"></use></svg> Activez votre accès</h3>
+                    <p>Choisissez votre formule puis effectuez le paiement.</p>
+                </div>
+            </div>
+
+            <div class="sub-plans-list">
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></span> Accompagnement final Pro</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">4 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Accompagnement final Pro','4 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></span> Accompagnement final Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">3 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Accompagnement final Direct','3 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-briefcase"></use></svg></span> Concours Professionnel</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">20 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Professionnel (Annuel)','20 000 FCFA')">Choisir</button>
+                        </div>
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">5 000 <small>FCFA / Mois</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Professionnel (Mensuel)','5 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-road"></use></svg></span> Concours Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">10 000 <small>FCFA</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours Direct','10 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-landmark"></use></svg></span> Concours collectivités territoriales</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">15 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Concours collectivités territoriales','15 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-globe"></use></svg></span> Culture générale Pro</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">10 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Culture générale Pro','10 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-globe"></use></svg></span> Culture générale Direct</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">4 000 <small>FCFA / An</small></span>
+                            <button class="btn-choose" onclick="selectPlan('Culture générale Direct','4 000 FCFA')">Choisir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-plan-row">
+                    <div class="sub-plan-title"><span class="mini-icon"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></span> Formation spéciale et intensive</div>
+                    <div class="sub-plan-options">
+                        <div class="sub-plan-option">
+                            <span class="sub-plan-price">Sur demande</span>
+                            <button class="btn-choose whatsapp" onclick="openSpecialFormationWhatsApp()">
+                                <svg class="ico" style="vertical-align:-2px; font-size:11px; margin-right:3px;"><use href="#fa-whatsapp"></use></svg>Contacter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-note"><svg class="ico"><use href="#fa-circle-info"></use></svg> Après le paiement, envoyez la capture de votre reçu pour l'activation.</div>
+        </div>
+    </div>
+
+    <div id="view-payment-methods" class="view">
+        <div class="payment-section" style="margin-top:20px;">
+            <div class="payment-recap">
+                <span class="payment-kicker">VOTRE CHOIX</span>
+                <div class="payment-recap-value" id="payment-choice-recap">—</div>
+            </div>
+        </div>
+
+        <div class="payment-section">
+            <div class="payment-head">
+                <div>
+                    <span class="payment-kicker">PAIEMENT</span>
+                    <h3><svg class="ico"><use href="#fa-mobile-screen-button"></use></svg> Choisissez un moyen de paiement</h3>
+                </div>
+            </div>
+            <div class="payment-methods">
+                <button class="big-pay-card orange-card" onclick="choosePaymentMethod('Orange Money','75 51 23 79')">
+                    <span class="big-pay-logo">
+                        <svg viewBox="0 0 64 64" width="32" height="32"><circle cx="32" cy="32" r="30" fill="#FF7900"/><path d="M20 34 31 23 M31 23 31 31 M31 23 23 23" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 30 33 41 M33 41 33 33 M33 41 41 41" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="big-pay-info">
+                        <span class="big-pay-title t-orange">Orange Money</span>
+                        <span class="big-pay-sub t-orange">Paiement via Orange Money</span>
+                        <span class="big-pay-feature"><svg class="ico"><use href="#fa-mobile-screen-button"></use></svg> <span id="orange-ussd-feature">Composez le code USSD fourni</span></span>
+                    </span>
+                </button>
+                <button class="big-pay-card moov-card" onclick="choosePaymentMethod('Moov Money','72 04 29 08')">
+                    <span class="big-pay-logo">
+                        <svg viewBox="0 0 64 64" width="30" height="30"><rect x="12" y="12" width="40" height="40" rx="9" fill="#FF7900" transform="rotate(45 32 32)"/><text x="32" y="39" font-family="Poppins, sans-serif" font-weight="800" font-size="20" fill="#fff" text-anchor="middle">M</text></svg>
+                    </span>
+                    <span class="big-pay-info">
+                        <span class="big-pay-title t-moov">Moov Money</span>
+                        <span class="big-pay-sub t-moov">Paiement via Moov Money</span>
+                        <span class="big-pay-feature"><svg class="ico"><use href="#fa-comment-sms"></use></svg> <span id="moov-ussd-feature">Recevez un code OTP par SMS</span></span>
+                    </span>
+                </button>
+            </div>
+            <div class="payment-note"><svg class="ico"><use href="#fa-circle-info"></use></svg> Après le paiement, envoyez la capture de votre reçu pour l'activation.</div>
+        </div>
+    </div>
+
+    <!-- FENÊTRE DE PAIEMENT -->
+    <div class="modal-overlay" id="payment-modal" onclick="closePayment(event)">
+        <div class="payment-modal" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closePayment()"><svg class="ico"><use href="#fa-xmark"></use></svg></button>
+            <div class="modal-payment-icon" id="payment-modal-icon"><svg class="ico"><use href="#fa-mobile-screen-button"></use></svg></div>
+            <span class="payment-kicker">MODE DE PAIEMENT</span>
+            <h2 id="payment-title">Orange Money</h2>
+            <div id="payment-plan" style="font-size:10px;color:#7b8983;margin:4px 0 12px;font-weight:700;">Abonnement mensuel • 5 000 FCFA</div>
+            <p class="modal-subtitle">Utilisez le numéro ci-dessous pour effectuer votre paiement.</p>
+            <div class="payment-number" id="payment-number">75 51 23 79</div>
+            <div class="payment-steps">
+                <div><b>1</b><span>Effectuez le paiement de <strong id="payment-amount">5 000 FCFA</strong>.</span></div>
+                <div><b>2</b><span>Conservez la capture du reçu.</span></div>
+                <div><b>3</b><span>Envoyez-la à l'assistance pour activation.</span></div>
+            </div>
+            <a class="btn-primary btn-call" id="payment-dial-btn" href="tel:">
+                <svg class="ico"><use href="#fa-mobile-screen-button"></use></svg> Je veux faire le paiement
+            </a>
+            <button class="btn-primary" onclick="closePayment(); alert('Votre paiement doit être confirmé avant l’activation du compte.')">
+                <svg class="ico"><use href="#fa-check"></use></svg> J'ai effectué le paiement
+            </button>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav" id="bottom-nav">
+        <button type="button" class="nav-item active" onclick="goTo('view-home', 'Accueil')">
+            <svg class="ico"><use href="#fa-house"></use></svg><span>Accueil</span>
+        </button>
+        <button type="button" class="nav-item" onclick="goTo('view-concours-hub', 'Concours')">
+            <svg class="ico"><use href="#fa-trophy"></use></svg><span>Concours</span>
+        </button>
+        <button type="button" class="nav-item" onclick="goTo('view-downloads', 'Téléchargements')">
+            <svg class="ico"><use href="#fa-download"></use></svg><span>Téléchargements</span>
+        </button>
+        <button type="button" class="nav-item" onclick="handleProfileClick()">
+            <svg class="ico"><use href="#fa-user"></use></svg><span>Profil</span>
+        </button>
+    </div>
+
+</div>
+
+<!-- --- SCRIPT JAVASCRIPT --- -->
+<script>
+    // DONNÉES CONCOURS PRO
+    const data = [
+        { id: 1, title: "I - Admin. Économique et Financière", icon: "fa-chart-pie", subs: [
+            { name: "Impôts", url: "https://concourscomplet.vercel.app/CP/IMPÔTS/indexIMPÔTS.html" },
+            { name: "Finances", url: "https://concourscomplet.vercel.app/CP/FC/indexF.html" },
+            { name: "Trésor", url: "https://concourscomplet.vercel.app/CP/FC/indexT.html" },
+            { name: "Douanes", url: "https://concourscomplet.vercel.app/CP/Douanes/indexDouanes.html" },
+            { name: "Affaires Économiques", url: "https://concourscomplet.vercel.app/CP/AECO/indexAECO.html" },
+            { name: "Statistiques", url: "https://concourscomplet.vercel.app/CP/Statistiques/indexStatistiques.html" }
+        ]},
+        { id: 2, title: "II - Communication, Archives et Culture", icon: "fa-microphone", subs: [
+            { name: "Communication", url: "https://concourscomplet.vercel.app/CP/Communication/indexCommunication.html" },
+            { name: "Culture - Tourisme", url: "https://concourscomplet.vercel.app/CP/Culture&Tourisme/indexCulture&Tourisme.html" },
+            { name: "Archivistique - Bibliothéconomie", url: "https://concourscomplet.vercel.app/CP/Archivistique&Biblio/indexArchivistique&Biblio.html" }
+        ]},
+        { id: 3, title: "III - Eaux, Forêts, Agri et Environnement", icon: "fa-tree", subs: [
+            { name: "Eaux et Forêts", url: "https://concourscomplet.vercel.app/CP/Eaux&Forêts/indexEaux&Forêts.html" },
+            { name: "Agriculture", url: "https://concourscomplet.vercel.app/CP/Agriculture/indexAgriculture.html" },
+            { name: "Environnement", url: "https://concourscomplet.vercel.app/CP/Environnement/indexEnvironnement.html" }
+        ]},
+        { id: 4, title: "IV - Éducation, Formation et Emploi", icon: "fa-user-graduate", subs: [
+            { name: "Inspecteurs Enseignement Primaire", url: "https://concourscomplet.vercel.app/CP/IEP/indexIEP.html" },
+            { name: "AASU-CASU", url: "https://concourscomplet.vercel.app/CP/AASU&CASU/indexAASU&CASU.html" },
+            { name: "AISU-CISU", url: "https://concourscomplet.vercel.app/CP/AISU&CISU/indexAISU&CISU.html" }
+        ]},
+        { id: 5, title: "V - Gouvernance Administrative", icon: "fa-landmark", subs: [
+            { name: "Administration du Territoire", url: "https://concourscomplet.vercel.app/CP/AG/indexAG.html" },
+            { name: "Administration du Travail", url: "https://concourscomplet.vercel.app/CP/Adminis&Travail/indexAdminis&Travail.html" },
+            { name: "GRH", url: "https://concourscomplet.vercel.app/CP/GRH/indexGRH.html" },
+            { name: "Affaires Étrangères", url: "https://concourscomplet.vercel.app/CP/AE/indexAE.html" }
+        ]},
+        { id: 6, title: "VI - Infrastructures", icon: "fa-road", subs: [
+            { name: "Infrastructure-Assainissement", url: "https://concourscomplet.vercel.app/CP/Infras&Assai/indexInfras&Assai.html" }
+        ]},
+        { id: 7, title: "VII - Droits Humains et Promotion", icon: "fa-scale-balanced", subs: [
+            { name: "Droit Humain", url: "https://concourscomplet.vercel.app/CP/Droit&Humain/indexDroit&Humain.html" },
+            { name: "Éducation Sociale", url: "https://concourscomplet.vercel.app/CP/Éducation&sociale/indexÉducation&sociale.html" },
+            { name: "Promotion du Genre", url: "https://concourscomplet.vercel.app/CP/Promotion&genre/indexPromotion&genre.html" }
+        ]},
+        { id: 8, title: "VIII - Santé Humaine et Animale", icon: "fa-hospital", subs: [
+            { name: "Gestionnaires Services Santé", url: "https://concourscomplet.vercel.app/CP/GSS/indexGSS.html" },
+            { name: "Santé Animale", url: "https://concourscomplet.vercel.app/CP/Santé&Animale/indexSanté&Animale.html" },
+            { name: "Santé Humaine", url: "https://concourscomplet.vercel.app/CP/Santé&Humaine/indexSanté&Humaine.html" }
+        ]},
+        { id: 9, title: "IX - Garde de Sécurité Pénitentiaire", icon: "fa-shield-halved", subs: [
+            { name: "GSP", url: "https://concourscomplet.vercel.app/CP/GSP/indexGSP.html" }
+        ]}
+    ];
+
+    // Remplace les alertes natives du navigateur (qui affichent « hnfapp.vercel.app indique »)
+    // par une fenêtre HNF sans adresse. Les messages sont mis en file d'attente, un à la fois.
+    (function () {
+        const queue = [];
+        let overlay = null, msgEl = null, btn = null, showing = false;
+
+        function build() {
+            if (overlay) return;
+            overlay = document.createElement('div');
+            overlay.className = 'hnf-dialog-overlay';
+            overlay.setAttribute('role', 'alertdialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.innerHTML = '<div class="hnf-dialog"><div class="hnf-dialog-title">Haut Niveau Formation</div><div class="hnf-dialog-msg"></div><button type="button" class="hnf-dialog-btn">OK</button></div>';
+            document.body.appendChild(overlay);
+            msgEl = overlay.querySelector('.hnf-dialog-msg');
+            btn = overlay.querySelector('.hnf-dialog-btn');
+            btn.addEventListener('click', function () {
+                overlay.classList.remove('open');
+                showing = false;
+                next();
+            });
+        }
+
+        function next() {
+            if (showing || queue.length === 0) return;
+            showing = true;
+            build();
+            msgEl.textContent = queue.shift();
+            overlay.classList.add('open');
+            btn.focus();
+        }
+
+        window.alert = function (message) {
+            queue.push(String(message == null ? '' : message));
+            if (document.body) next();
+        };
+    })();
+
+    let isLoggedIn = false;
+    let userPermissions = [];
+    let userActif = false;
+    let viewHistory = ['view-home'];
+    let userName = '';
+    let userPhone = '';
+    let selectedPlanName = '';
+    let selectedPlanPrice = '';
+    let currentClientDocId = null;
+
+    // Reconnexion automatique : si Firebase se souvient d'une session déjà
+    // ouverte (l'utilisateur n'a pas appuyé sur "Se déconnecter"), on recharge
+    // sa fiche Firestore sans lui redemander son mot de passe.
+    hnfAuth.onAuthStateChanged(function (user) {
+        if (user && !isLoggedIn) {
+            const docId = user.email.split('@')[0];
+            hnfDb.collection('clients').doc(docId).get().then(function (doc) {
+                if (doc.exists) {
+                    applyLoggedInState(docId, doc.data());
+                }
+            }).catch(function () {
+                // Hors ligne : on réutilise la dernière fiche connue de CE compte
+                // (la vérification en direct reste faite à chaque ouverture de contenu).
+                try {
+                    const c = JSON.parse(localStorage.getItem('hnf_profile_cache') || 'null');
+                    if (c && c.docId === docId && c.data && !isLoggedIn) applyLoggedInState(docId, c.data);
+                } catch (e) {}
+            });
+        }
+    });
+
+    window.onload = function() {
+        // Init catégories pro
+        const catContainer = document.getElementById('categories-container');
+        data.forEach(cat => {
+            catContainer.innerHTML += `
+                <div class="filiere-card" onclick="openCategory(${cat.id}, '${cat.title.replace(/'/g, "\\'")}')">
+                    <div class="filiere-visual">
+                        <div class="filiere-icon"><svg class="ico"><use href="#${cat.icon}"></use></svg></div>
+                        <span class="filiere-number">0${cat.id}</span>
+                    </div>
+                    <div class="filiere-info">
+                        <div class="filiere-kicker">CONCOURS PROFESSIONNEL</div>
+                        <div class="filiere-title">${cat.title}</div>
+                        <div class="filiere-bottom">
+                            <span><svg class="ico"><use href="#fa-book-open"></use></svg> QCM & documents</span>
+                            <span class="filiere-arrow"><svg class="ico"><use href="#fa-arrow-right"></use></svg></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        renderUnlockedItems();
+    };
+
+    // LOGIQUE DE GÉNÉRATION DES CONCOURS DÉBLOQUÉS
+    // Liste, par concours débloqué, toutes ses sous-rubriques. Un clic passe par
+    // checkAccess() : vérification en direct sur Firestore, puis ouverture du contenu.
+    const CC = 'https://concourscomplet.vercel.app/';
+    const DIRECT_SUBS_CATALOG = [
+        { n: 'Français', i: 'fa-language', u: CC + 'CD/Français/indexFrançais.html' },
+        { n: 'Littérature', i: 'fa-book', u: CC + 'CD/Littérature/indexLittérature.html' },
+        { n: 'Mathématiques', i: 'fa-calculator', u: CC + 'CD/Maths/indexMaths.html' },
+        { n: 'SVT', i: 'fa-microscope', u: CC + 'CD/SVT/indexSVT.html' },
+        { n: 'Psychotechnique', i: 'fa-brain', u: CC + 'CD/Psycho/indexPsycho.html' },
+        { n: 'Physique/Chimie', i: 'fa-atom', u: CC + 'CD/PC/indexPC.html' },
+        { n: 'Histoire/Géographie', i: 'fa-earth-africa', u: CC + 'CD/HG/indexHG.html' },
+        { n: 'Économie', i: 'fa-coins', u: CC + 'CD/Économie/indexÉconomie.html' },
+        { n: 'Sociologie', i: 'fa-user', u: CC + 'CD/Sociologie/indexSociologie.html' },
+        { n: 'Droit', i: 'fa-scale-balanced', u: CC + 'CD/Droit/indexDroit.html' },
+        { n: 'Philosophie', i: 'fa-square-question', u: CC + 'CD/Philosophie/indexPhilosophie.html' }
+    ];
+    const CT_SUBS_CATALOG = [
+        { n: 'Administration Générale', i: 'fa-landmark', u: CC + 'CT/index1.html' },
+        { n: 'Services financiers', i: 'fa-coins', u: '#' }
+    ];
+
+    function renderUnlockedItems() {
+        const container = document.getElementById('unlocked-items-container');
+        container.innerHTML = '';
+        const perms = userPermissions || [];
+
+        if (!isLoggedIn) {
+            container.innerHTML = '<div class="unlocked-empty-state">Connectez-vous ou abonnez-vous<br>pour voir vos accès</div>';
+            return;
+        }
+        if (!userActif || perms.length === 0) {
+            container.innerHTML = '<div class="unlocked-empty-state">Aucun concours débloqué<br>pour le moment</div>';
+            return;
+        }
+
+        // Chaque élément : n = texte affiché, k = nom de permission vérifié, u = adresse, i = icône
+        const groups = [];
+        const RED = ['#c84040', '#ffebeb'], BLUE = ['#2874c6', '#eef5ff'], PURPLE = ['#5f33b3', '#f4f0ff'], GREEN = ['var(--primary)', 'var(--card-green-bg)'];
+
+        // 1. Concours Direct
+        const direct = DIRECT_SUBS_CATALOG.filter(x => perms.includes('Concours Direct') || perms.includes(x.n))
+            .map(x => ({ n: x.n, k: x.n, u: x.u, i: x.i }));
+        if (direct.length) groups.push({ title: 'Concours Direct', color: RED, items: direct });
+
+        // 2. Accompagnement final
+        const af = [];
+        if (perms.includes('Accompagnement final')) af.push({ n: 'Accompagnement final Direct', k: 'Accompagnement final', u: CC + 'CD/AFD/indexAFD.html', i: 'fa-handshake-angle' });
+        if (perms.includes('Accompagnement final Pro')) af.push({ n: 'Accompagnement final Pro', k: 'Accompagnement final Pro', u: '#', i: 'fa-handshake-angle' });
+        if (af.length) groups.push({ title: 'Accompagnement final', color: PURPLE, items: af });
+
+        // 3. Culture générale
+        const cg = [];
+        if (perms.includes('Culture générale')) cg.push({ n: 'Culture générale Direct', k: 'Culture générale', u: CC + 'CD/CGD/indexCGD.html', i: 'fa-globe' });
+        if (perms.includes('Culture générale Pro')) cg.push({ n: 'Culture générale Pro', k: 'Culture générale Pro', u: '#', i: 'fa-globe' });
+        if (cg.length) groups.push({ title: 'Culture générale', color: PURPLE, items: cg });
+
+        // 4. Concours Professionnel : une section par filière, avec les seules matières débloquées
+        data.forEach(cat => {
+            const subs = cat.subs.filter(sub => perms.includes(sub.name))
+                .map(sub => ({ n: sub.name, k: sub.name, u: sub.url, i: cat.icon }));
+            if (subs.length) groups.push({ title: 'Pro · ' + cat.title, color: GREEN, items: subs });
+        });
+
+        // 5. Collectivités Territoriales
+        const ct = CT_SUBS_CATALOG.filter(x => perms.includes('Collectivités') || perms.includes(x.n))
+            .map(x => ({ n: x.n, k: x.n, u: x.u, i: x.i }));
+        if (ct.length) groups.push({ title: 'Collectivités Territoriales', color: BLUE, items: ct });
+
+        if (groups.length === 0) {
+            container.innerHTML = '<div class="unlocked-empty-state">Aucun concours débloqué<br>pour le moment</div>';
+            return;
+        }
+
+        groups.forEach(g => {
+            const h = document.createElement('div');
+            h.className = 'dropdown-group-title';
+            h.textContent = g.title;
+            container.appendChild(h);
+            g.items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'dropdown-item';
+                row.innerHTML = '<div class="mini-icon"><svg class="ico"><use href="#' + item.i + '"></use></svg></div><div class="mini-text"></div>';
+                row.querySelector('.mini-icon').style.color = g.color[0];
+                row.querySelector('.mini-icon').style.background = g.color[1];
+                row.querySelector('.mini-text').textContent = item.n;
+                row.addEventListener('click', function () {
+                    document.getElementById('unlocked-dropdown').classList.remove('open');
+                    checkAccess(item.k, item.u);
+                });
+                container.appendChild(row);
+            });
+        });
+    }
+
+    // Relit la fiche du candidat sur Firestore et rafraîchit profil + concours débloqués.
+    function refreshClientData() {
+        if (!isLoggedIn || !currentClientDocId) return Promise.resolve();
+        return hnfDb.collection('clients').doc(currentClientDocId).get().then(function (doc) {
+            if (doc.exists) {
+                const d = doc.data();
+                userPermissions = d.permissions || [];
+                userActif = !!d.actif;
+                updateProfileUI(d);
+                renderUnlockedItems();
+            }
+        }).catch(function () { /* hors ligne : on garde l'affichage actuel */ });
+    }
+
+    function toggleUnlockedDropdown(event) {
+        if (event) event.stopPropagation();
+        const dd = document.getElementById('unlocked-dropdown');
+        dd.classList.toggle('open');
+        if (dd.classList.contains('open')) refreshClientData();
+    }
+
+    // Ferme automatiquement le menu si l'utilisateur appuie ailleurs sur l'écran.
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('unlocked-dropdown');
+        if (dropdown && !dropdown.contains(event.target)) {
+            dropdown.classList.remove('open');
+        }
+    });
+
+    function toggleMenu() {
+        document.getElementById('side-menu').classList.toggle('open');
+        document.getElementById('side-menu-overlay').classList.toggle('open');
+    }
+
+    let suppressHistoryPush = false;
+
+    function goTo(viewId, titleStr = "") {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        
+        if (viewHistory[viewHistory.length - 1] !== viewId) {
+            viewHistory.push(viewId);
+            if (!suppressHistoryPush) {
+                try { history.pushState({ hnfView: viewId }, '', location.pathname + location.search); } catch (e) {}
+            }
+        }
+
+        const mainHeader = document.querySelector('.header');
+        const subHeader = document.getElementById('secondary-header');
+        const headerTitle = document.getElementById('global-header-title');
+        
+        if (viewId === 'view-home') {
+            mainHeader.style.display = 'flex';
+            subHeader.style.display = 'none';
+            updateBottomNav(0);
+        } else if (viewId === 'view-downloads') {
+            // L'écran Téléchargements possède son propre en-tête, comme dans la maquette.
+            mainHeader.style.display = 'none';
+            subHeader.style.display = 'none';
+            updateBottomNav(2);
+            purgeExpiredDownloads().finally(renderDownloads);
+        } else {
+            mainHeader.style.display = 'none';
+            subHeader.style.display = 'flex';
+            headerTitle.innerText = titleStr;
+            
+            if(viewId === 'view-profile') updateBottomNav(3);
+            else if(viewId === 'view-concours-hub' || viewId === 'view-categories' || viewId === 'view-concours-directs' || viewId === 'view-subcategories' || viewId === 'view-collectivites') updateBottomNav(1);
+            else updateBottomNav(-1);
+        }
+    }
+
+    function goBack() {
+        if (viewHistory.length > 1) {
+            viewHistory.pop();
+            let previousView = viewHistory[viewHistory.length - 1];
+            let title = previousView === 'view-home' ? '' : 'Retour';
+            
+            if(previousView === 'view-concours-hub') title = 'Concours';
+            if(previousView === 'view-categories') title = 'Concours Professionnels';
+            if(previousView === 'view-auth') title = 'Authentification';
+            if(previousView === 'view-collectivites') title = 'Concours des collectivités';
+            if(previousView === 'view-concours-directs') title = 'Concours Direct';
+            if(previousView === 'view-profile') title = 'Mon Profil';
+            if(previousView === 'view-payment-methods') title = 'Paiement';
+            if(previousView === 'view-tarifs') title = 'Nos tarifs';
+            if(previousView === 'view-accompagnement-final') title = 'Accompagnement final';
+            if(previousView === 'view-culture-generale') title = 'Culture générale et actualité';
+            
+            suppressHistoryPush = true;
+            goTo(previousView, title);
+            suppressHistoryPush = false;
+        }
+    }
+
+    // Relie le bouton "retour" natif d'Android (et le geste retour) à la
+    // navigation interne de l'appli : il recule d'abord dans les écrans,
+    // et ne ferme l'appli que lorsqu'il n'y a plus rien à afficher derrière.
+    window.addEventListener('popstate', function () {
+        const overlay = document.getElementById('collectivites-frame-overlay');
+        if (overlay && overlay.classList.contains('open')) {
+            closeCollectiviteFrame();
+            history.pushState({ hnfView: viewHistory[viewHistory.length - 1] }, '', location.pathname + location.search);
+            return;
+        }
+        if (viewHistory.length > 1) {
+            goBack();
+        }
+    });
+
+    // Appelée par l'application Android (WebView) quand on appuie sur le bouton retour.
+    // Elle ferme d'abord ce qui est ouvert (message, paiement, fenêtre de contenu, menus),
+    // puis recule d'un écran. Elle répond 'exit' seulement quand il n'y a plus rien à fermer.
+    window.hnfNativeBack = function () {
+        try {
+            const dlg = document.querySelector('.hnf-dialog-overlay.open .hnf-dialog-btn');
+            if (dlg) { dlg.click(); return 'handled'; }
+            const pay = document.getElementById('payment-modal');
+            if (pay && pay.classList.contains('open')) { pay.classList.remove('open'); return 'handled'; }
+            const overlay = document.getElementById('collectivites-frame-overlay');
+            if (overlay && overlay.classList.contains('open')) { closeCollectiviteFrame(); return 'handled'; }
+            const side = document.getElementById('side-menu');
+            if (side && side.classList.contains('open')) { toggleMenu(); return 'handled'; }
+            const dd = document.getElementById('unlocked-dropdown');
+            if (dd && dd.classList.contains('open')) { dd.classList.remove('open'); return 'handled'; }
+            // Sur l'accueil : on quitte l'application, même si l'historique contient d'anciens écrans
+            if (viewHistory[viewHistory.length - 1] === 'view-home') return 'exit';
+            if (viewHistory.length > 1) { goBack(); return 'handled'; }
+        } catch (e) {}
+        return 'exit';
+    };
+
+    function updateBottomNav(index) {
+        const items = document.querySelectorAll('.nav-item');
+        items.forEach(item => item.classList.remove('active'));
+        if(index >= 0) items[index].classList.add('active');
+    }
+
+    function openCategory(id, title) {
+        const cat = data.find(c => c.id === id);
+        const subContainer = document.getElementById('subcategories-container');
+        subContainer.innerHTML = ""; 
+        
+        cat.subs.forEach(sub => {
+            let hasAccess = userPermissions.includes(sub.name);
+            let statusIcon = hasAccess ? "fa-unlock" : "fa-lock";
+            let lockClass = hasAccess ? "" : "locked-item";
+            
+            subContainer.innerHTML += `
+                <div class="list-item ${lockClass}" onclick="checkAccess('${sub.name.replace(/'/g, "\\'")}', '${sub.url}')">
+                    <div class="list-icon"><svg class="ico"><use href="#${statusIcon}"></use></svg></div>
+                    <div class="list-text">${sub.name}</div>
+                    <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+                </div>
+            `;
+        });
+
+        // Rubriques communes ajoutées à la fin de chaque filière du Concours Professionnel.
+        subContainer.innerHTML += `
+            <div class="list-item" onclick="checkAccess('Accompagnement final Pro', '#')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-handshake-angle"></use></svg></div>
+                <div class="list-text">Accompagnement final Pro</div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+            <div class="list-item" onclick="checkAccess('Culture générale Pro', '#')">
+                <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
+                <div class="list-text">Culture générale Pro</div>
+                <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
+            </div>
+        `;
+        
+        goTo('view-subcategories', title);
+    }
+
+    // ===== OUTILS FIREBASE (numéro WhatsApp <-> pseudo-email, identifiant d'appareil) =====
+
+    // Nettoie un numéro WhatsApp (retire espaces, +, tirets) pour en faire
+    // un identifiant stable : utilisé comme ID de document Firestore et
+    // comme base du pseudo-email Firebase Authentication.
+    function cleanWhatsapp(raw) {
+        return (raw || '').replace(/[^0-9]/g, '');
+    }
+    function whatsappToEmail(raw) {
+        return cleanWhatsapp(raw) + '@hnf.app';
+    }
+
+    // Identifiant unique de cet appareil/navigateur : généré une seule fois
+    // puis conservé dans localStorage (survit à la fermeture de l'appli).
+    function getDeviceId() {
+        let id = localStorage.getItem('hnf_device_id');
+        if (!id) {
+            id = 'dev-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('hnf_device_id', id);
+        }
+        return id;
+    }
+
+    // Vérification EN DIRECT à chaque ouverture de contenu : relit la fiche
+    // Firestore du client (actif, permissions, deviceId) plutôt que de se fier
+    // uniquement aux données déjà chargées en mémoire, pour éviter tout contournement.
+    function checkAccess(itemName, itemUrl) {
+        if (!isLoggedIn || !currentClientDocId) {
+            alert("🔒 ACCÈS REFUSÉ : Connectez-vous pour accéder à : " + itemName);
+            goTo('view-auth', 'Connexion requise');
+            return;
+        }
+
+        hnfDb.collection('clients').doc(currentClientDocId).get().then(function (doc) {
+            if (!doc.exists) {
+                alert("Compte introuvable. Merci de contacter l'assistance WhatsApp.");
+                return;
+            }
+            const dataClient = doc.data();
+
+            // Verrou un seul appareil : si l'appareil enregistré sur Firestore
+            // ne correspond plus à celui-ci, on déconnecte automatiquement.
+            if (dataClient.deviceId && dataClient.deviceId !== getDeviceId()) {
+                alert("Ce compte est utilisé sur un autre appareil.");
+                processLogout();
+                return;
+            }
+
+            updateProfileUI(dataClient);
+
+            if (!dataClient.actif) {
+                goTo('view-profile', 'Activation requise');
+                return;
+            }
+
+            const permissions = dataClient.permissions || [];
+            let hasAccess = permissions.includes(itemName) ||
+                            (permissions.includes('Concours Direct') && isDirectSub(itemName)) ||
+                            (permissions.includes('Collectivités') && isColSub(itemName));
+
+            userPermissions = permissions; // met à jour l'affichage local (Mes accès débloqués)
+            userActif = !!dataClient.actif;
+            renderUnlockedItems();
+
+            if (!hasAccess) {
+                goTo('view-profile', 'Activation requise');
+            } else if (itemUrl && itemUrl !== '#') {
+                openCollectiviteLink(itemName, itemUrl);
+            } else {
+                alert("✅ Accès autorisé : " + itemName + "\nCette rubrique sera disponible très prochainement.");
+            }
+        }).catch(function (err) {
+            alert("Erreur de connexion au serveur. Vérifiez votre connexion internet et réessayez.");
+        });
+    }
+
+    function isDirectSub(name) {
+        // Accompagnement final et Culture générale (Direct) sont retirés de cette liste :
+        // ils ne doivent plus être débloqués automatiquement par le bloc "Concours Direct",
+        // mais activés séparément (permissions 'Accompagnement final' et 'Culture générale').
+        const subs = ['Français', 'Littérature', 'Mathématiques', 'SVT', 'Psychotechnique', 'Physique/Chimie', 'Histoire/Géographie', 'Économie', 'Sociologie', 'Droit', 'Philosophie'];
+        return subs.includes(name);
+    }
+    function isColSub(name) {
+        const subs = ['Administration Générale', 'Services financiers'];
+        return subs.includes(name);
+    }
+
+    // Œil du champ mot de passe : affiche / masque ce qui est saisi.
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.querySelector('use').setAttribute('href', show ? '#fa-eye-slash' : '#fa-eye');
+        btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+    }
+
+    function switchAuthTab(tab) {
+        document.getElementById('tab-login').classList.remove('active');
+        document.getElementById('tab-signup').classList.remove('active');
+        document.getElementById('form-login').classList.remove('active');
+        document.getElementById('form-signup').classList.remove('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('form-' + tab).classList.add('active');
+    }
+
+    function processLogin() {
+        const whatsappRaw = document.getElementById('login-whatsapp').value.trim();
+        const password = document.getElementById('login-password').value;
+        const btn = document.getElementById('login-submit-btn');
+
+        if (!whatsappRaw || !password) {
+            alert("Merci de renseigner votre numéro WhatsApp et votre mot de passe.");
+            return;
+        }
+
+        const email = whatsappToEmail(whatsappRaw);
+        btn.disabled = true;
+        btn.innerText = "Connexion...";
+
+        hnfAuth.signInWithEmailAndPassword(email, password).then(function (cred) {
+            const docId = cleanWhatsapp(whatsappRaw);
+            return hnfDb.collection('clients').doc(docId).get().then(function (doc) {
+                if (!doc.exists) {
+                    throw new Error("Fiche client introuvable.");
+                }
+                const dataClient = doc.data();
+                applyLoggedInState(docId, dataClient);
+
+                // Enregistre cet appareil comme "appareil autorisé" — un éventuel
+                // autre appareil déjà connecté sera déconnecté à sa prochaine action.
+                return hnfDb.collection('clients').doc(docId).update({ deviceId: getDeviceId() });
+            });
+        }).then(function () {
+            btn.disabled = false;
+            btn.innerText = "Se connecter";
+            goTo('view-home', 'Accueil');
+        }).catch(function (err) {
+            btn.disabled = false;
+            btn.innerText = "Se connecter";
+            alert("Connexion impossible : numéro WhatsApp ou mot de passe incorrect.");
+        });
+    }
+
+    // Applique à l'interface l'état "connecté" une fois les données du client
+    // récupérées depuis Firestore (utilisé à la connexion ET au démarrage de l'app).
+    // Met à jour la carte Profil (nom, numéro, statut) depuis la fiche Firestore.
+    // Statut « Actif » = compte activé par l'admin ET au moins un concours activé.
+    function updateProfileUI(dataClient) {
+        const perms = (dataClient && dataClient.permissions) || [];
+        const isActive = !!(dataClient && dataClient.actif) && perms.length > 0;
+        const phone = (dataClient && dataClient.whatsapp) || currentClientDocId || '';
+        document.getElementById('profile-name').innerText = (dataClient && dataClient.nom) || phone || 'Non connecté';
+        document.getElementById('profile-phone').innerText = phone;
+        const badge = document.getElementById('profile-status');
+        badge.className = 'badge ' + (isActive ? 'badge-active' : 'badge-inactive');
+        badge.innerText = 'Statut : ' + (isActive ? 'Compte Actif' : 'Compte Inactif');
+    }
+
+    function applyLoggedInState(docId, dataClient) {
+        try { localStorage.setItem('hnf_profile_cache', JSON.stringify({ docId: docId, data: dataClient })); } catch (e) {}
+        isLoggedIn = true;
+        currentClientDocId = docId;
+        userPhone = dataClient.whatsapp || docId;
+        userName = dataClient.nom || userPhone;
+        userPermissions = dataClient.permissions || [];
+        userActif = !!dataClient.actif;
+
+        document.getElementById('home-profile-icon').classList.add('logged-in');
+        document.getElementById('logout-link').style.display = '';
+        document.getElementById('menu-name').innerText = userName;
+        document.getElementById('menu-phone').innerText = userPhone;
+
+        updateProfileUI(dataClient);
+        renderUnlockedItems();
+    }
+
+    function processLogout() {
+        try { localStorage.removeItem('hnf_profile_cache'); } catch (e) {}
+        hnfAuth.signOut();
+        isLoggedIn = false;
+        currentClientDocId = null;
+        userPermissions = [];
+        userActif = false;
+        document.getElementById('home-profile-icon').classList.remove('logged-in');
+        document.getElementById('logout-link').style.display = 'none';
+        updateProfileUI(null);
+        document.getElementById('menu-name').innerText = "Non Connecté";
+        document.getElementById('menu-phone').innerText = "Identifiez-vous";
+        renderUnlockedItems();
+        goTo('view-home', 'Accueil');
+    }
+
+    // Inscription : extrait discrètement Nom, Prénom et Numéro WhatsApp,
+    // connecte l'utilisateur puis l'envoie directement sur son Profil.
+    function processSignup() {
+        const nom = document.getElementById('signup-nom').value.trim();
+        const prenom = document.getElementById('signup-prenom').value.trim();
+        const ville = document.getElementById('signup-ville').value.trim();
+        const whatsapp = document.getElementById('signup-whatsapp').value.trim();
+        const password = document.getElementById('signup-password').value;
+
+        if (!nom || !prenom || !whatsapp || !password) {
+            alert("Merci de renseigner au moins le nom, le prénom, le numéro WhatsApp et un mot de passe.");
+            return;
+        }
+        if (password.length < 6) {
+            alert("Le mot de passe doit contenir au moins 6 caractères.");
+            return;
+        }
+
+        const docId = cleanWhatsapp(whatsapp);
+        const email = whatsappToEmail(whatsapp);
+        const fullName = (nom + ' ' + prenom).trim();
+
+        hnfAuth.createUserWithEmailAndPassword(email, password).then(function (cred) {
+            return hnfDb.collection('clients').doc(docId).set({
+                nom: fullName,
+                whatsapp: whatsapp,
+                ville: ville,
+                uid: cred.user.uid,
+                actif: false,
+                permissions: [],
+                deviceId: getDeviceId(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }).then(function () {
+            applyLoggedInState(docId, { nom: fullName, whatsapp: whatsapp, permissions: [] });
+            document.getElementById('profile-name').innerText = fullName;
+            document.getElementById('profile-phone').innerText = whatsapp;
+            goTo('view-profile', 'Mon Profil');
+        }).catch(function (err) {
+            if (err.code === 'auth/email-already-in-use') {
+                alert("Un compte existe déjà avec ce numéro WhatsApp. Utilisez plutôt l'onglet Connexion.");
+            } else if (err.code === 'auth/weak-password') {
+                alert("Mot de passe trop faible : utilisez au moins 6 caractères.");
+            } else {
+                alert("Inscription impossible pour le moment. Vérifiez votre connexion internet et réessayez.");
+            }
+        });
+    }
+
+    // Mémorise la formule choisie dans le tableau d'abonnements puis
+    // redirige vers l'écran des moyens de paiement.
+    function selectPlan(planName, planPrice) {
+        selectedPlanName = planName;
+        selectedPlanPrice = planPrice;
+        const recap = document.getElementById('payment-choice-recap');
+        recap.innerHTML = 'Choix : ' + planName + '<small>' + planPrice + '</small>';
+
+        // Génère les codes USSD en fonction du montant de la formule choisie
+        const amount = planPrice.replace(/[^0-9]/g, '');
+        document.getElementById('orange-ussd-feature').innerText = '*144*2*1*75512379*' + amount + '#';
+        document.getElementById('moov-ussd-feature').innerText = '*555*2*1*72042908*' + amount + '#';
+
+        goTo('view-payment-methods', 'Paiement');
+    }
+
+    // Ouvre le modal de paiement avec la formule mémorisée précédemment.
+    function choosePaymentMethod(method, number) {
+        showPayment(method, number, selectedPlanPrice || '—', selectedPlanName || 'Abonnement');
+    }
+
+    // Bouton "Formation spéciale et intensive" : ouvre WhatsApp (lien factice).
+    function openSpecialFormationWhatsApp() {
+        window.open('https://wa.me/22670000000?text=' + encodeURIComponent('Bonjour, je suis intéressé(e) par la Formation spéciale et intensive.'), '_blank');
+    }
+
+    const orangeLogoSVG = '<svg viewBox="0 0 64 64" width="30" height="30"><circle cx="32" cy="32" r="30" fill="#FF7900"/><path d="M20 34 31 23 M31 23 31 31 M31 23 23 23" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 30 33 41 M33 41 33 33 M33 41 41 41" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const moovLogoSVG = '<svg viewBox="0 0 64 64" width="28" height="28"><rect x="12" y="12" width="40" height="40" rx="9" fill="#FF7900" transform="rotate(45 32 32)"/><text x="32" y="39" font-family="Poppins, sans-serif" font-weight="800" font-size="20" fill="#fff" text-anchor="middle">M</text></svg>';
+    let currentUSSDCode = '';
+
+    function showPayment(method, number, amount = '5 000 FCFA', plan = 'Abonnement mensuel') {
+        document.getElementById('payment-title').innerText = method;
+        document.getElementById('payment-number').innerText = number;
+        document.getElementById('payment-plan').innerText = plan + ' • ' + amount;
+        document.getElementById('payment-amount').innerText = amount;
+        const iconBox = document.getElementById('payment-modal-icon');
+        iconBox.innerHTML = method === 'Orange Money' ? orangeLogoSVG : (method === 'Moov Money' ? moovLogoSVG : '<svg class="ico"><use href="#fa-mobile-screen-button"></use></svg>');
+        iconBox.style.background = '#fff';
+
+        // Construit le code USSD à composer, en fonction de l'opérateur et du montant,
+        // et le place directement dans le lien "tel:" (plus fiable qu'une navigation en JS)
+        const numberDigits = number.replace(/\s/g, '');
+        const amountDigits = amount.replace(/[^0-9]/g, '');
+        if (method === 'Orange Money') {
+            currentUSSDCode = '*144*2*1*' + numberDigits + '*' + amountDigits + '#';
+        } else if (method === 'Moov Money') {
+            currentUSSDCode = '*555*2*1*' + numberDigits + '*' + amountDigits + '#';
+        } else {
+            currentUSSDCode = '';
+        }
+        document.getElementById('payment-dial-btn').setAttribute('href', 'tel:' + encodeURIComponent(currentUSSDCode));
+
+        document.getElementById('payment-modal').classList.add('open');
+    }
+
+    function closePayment(event) {
+        if (event && event.target !== event.currentTarget) return;
+        document.getElementById('payment-modal').classList.remove('open');
+    }
+
+    function openCollectivites() {
+        goTo('view-collectivites', 'Concours des collectivités');
+    }
+
+    // Remplace la fenêtre intégrée par une toute neuve : ça évite que le
+    // bouton retour du téléphone ne redéroule l'historique de toutes les
+    // pages visitées depuis le début (Administration Générale, Français, etc.)
+    function fenetreIntegreeFraiche() {
+        const ancienne = document.getElementById('collectivites-frame');
+        if (!ancienne) return null;
+        const nouvelle = document.createElement('iframe');
+        nouvelle.id = 'collectivites-frame';
+        nouvelle.className = 'collectivites-frame';
+        nouvelle.title = 'Concours des collectivités';
+        nouvelle.setAttribute('allow', 'downloads');
+        ancienne.replaceWith(nouvelle);
+        return nouvelle;
+    }
+
+    function openCollectiviteLink(name, url) {
+        if (!navigator.onLine) {
+            alert("Veuillez activer votre connexion Internet pour accéder à cette ressource.");
+            return;
+        }
+        const overlay = document.getElementById('collectivites-frame-overlay');
+        const title = document.getElementById('collectivites-frame-title');
+        const frame = fenetreIntegreeFraiche();
+        if (!overlay || !frame) {
+            window.open(url, '_blank');
+            return;
+        }
+        if (title) title.textContent = name || 'Concours des collectivités';
+        frame.src = url;
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCollectiviteFrame() {
+        const overlay = document.getElementById('collectivites-frame-overlay');
+        fenetreIntegreeFraiche();
+        if (overlay) {
+            overlay.classList.remove('open');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+        document.body.style.overflow = '';
+    }
+
+    const DOWNLOADS_STORAGE_KEY = 'hnf_downloads_v2';
+    const DOWNLOADS_DB_NAME = 'HNF_Downloads_DB';
+    const DOWNLOADS_DB_VERSION = 1;
+    const DOWNLOADS_STORE = 'documents';
+    const DOWNLOAD_EXPIRY_DAYS = 30;
+    let currentDownloadFilter = 'all';
+
+    /* Supprime automatiquement (métadonnées + contenu hors-ligne) tout
+       téléchargement enregistré depuis plus de 30 jours. */
+    async function purgeExpiredDownloads() {
+        const list = getSavedDownloads();
+        const maxAge = DOWNLOAD_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+        const now = Date.now();
+        const expired = [];
+        const kept = [];
+        list.forEach(d => {
+            const age = now - new Date(d.date).getTime();
+            if (Number.isFinite(age) && age > maxAge) expired.push(d);
+            else kept.push(d);
+        });
+        if (!expired.length) return false;
+        saveDownloads(kept);
+        for (const d of expired) {
+            await deleteDownloadedContent(d.id);
+        }
+        return true;
+    }
+
+    function daysRemaining(dateIso) {
+        const age = Date.now() - new Date(dateIso).getTime();
+        const remaining = DOWNLOAD_EXPIRY_DAYS - Math.floor(age / (24 * 60 * 60 * 1000));
+        return remaining > 0 ? remaining : 0;
+    }
+
+    function openDownloadsDB() {
+        return new Promise((resolve, reject) => {
+            if (!window.indexedDB) { reject(new Error('IndexedDB non disponible')); return; }
+            const request = indexedDB.open(DOWNLOADS_DB_NAME, DOWNLOADS_DB_VERSION);
+            request.onupgradeneeded = function () {
+                const db = request.result;
+                if (!db.objectStoreNames.contains(DOWNLOADS_STORE)) {
+                    db.createObjectStore(DOWNLOADS_STORE, { keyPath: 'id' });
+                }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function saveDownloadedContent(record) {
+        if (!record || !record.id || typeof record.content !== 'string') return;
+        try {
+            const db = await openDownloadsDB();
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(DOWNLOADS_STORE, 'readwrite');
+                tx.objectStore(DOWNLOADS_STORE).put({
+                    id: record.id,
+                    filename: record.filename,
+                    title: record.title,
+                    content: record.content,
+                    baseUrl: record.baseUrl || record.url,
+                    savedAt: new Date().toISOString()
+                });
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error);
+            });
+            db.close();
+        } catch (e) {
+            console.error('Impossible de sauvegarder le document localement', e);
+        }
+    }
+
+    async function getDownloadedContent(id) {
+        try {
+            const db = await openDownloadsDB();
+            const result = await new Promise((resolve, reject) => {
+                const tx = db.transaction(DOWNLOADS_STORE, 'readonly');
+                const request = tx.objectStore(DOWNLOADS_STORE).get(id);
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => reject(request.error);
+            });
+            db.close();
+            return result;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function deleteDownloadedContent(id) {
+        try {
+            const db = await openDownloadsDB();
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(DOWNLOADS_STORE, 'readwrite');
+                tx.objectStore(DOWNLOADS_STORE).delete(id);
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error);
+            });
+            db.close();
+        } catch (e) {}
+    }
+
+    function getSavedDownloads() {
+        try {
+            const data = JSON.parse(localStorage.getItem(DOWNLOADS_STORAGE_KEY) || '[]');
+            return Array.isArray(data) ? data : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveDownloads(list) {
+        try {
+            localStorage.setItem(DOWNLOADS_STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {}
+    }
+
+    async function registerDownload(item) {
+        if (!item || !item.url) return;
+        const list = getSavedDownloads();
+        const existing = list.findIndex(d => d.url === item.url);
+        const record = {
+            id: item.id || ('download_' + Date.now()),
+            title: item.title || 'Document',
+            url: item.url,
+            filename: item.filename || item.title || 'document.html',
+            type: item.downloadType || item.type || 'qcm',
+            source: item.source || 'Application',
+            date: item.date || new Date().toISOString()
+        };
+        if (existing >= 0) {
+            list[existing] = { ...list[existing], ...record, date: new Date().toISOString() };
+        } else {
+            list.unshift(record);
+        }
+        saveDownloads(list.slice(0, 200));
+        if (typeof item.content === 'string' && item.content.length) {
+            await saveDownloadedContent({ ...record, content: item.content, baseUrl: item.baseUrl || item.url });
+        }
+        renderDownloads();
+    }
+
+    let pendingDeleteId = null;
+
+    function closeDeleteModal() {
+        pendingDeleteId = null;
+        const modal = document.getElementById('hnfDeleteModal');
+        if (modal) modal.classList.remove('show');
+    }
+
+    function askDeleteDownload(id) {
+        const list = getSavedDownloads();
+        const record = list.find(d => d.id === id);
+        if (!record) return;
+
+        pendingDeleteId = id;
+        const message = document.getElementById('hnfDeleteMessage');
+        if (message) {
+            message.textContent = `Voulez-vous vraiment supprimer « ${record.title || 'ce document'} » de vos téléchargements ?`;
+        }
+        const modal = document.getElementById('hnfDeleteModal');
+        if (modal) modal.classList.add('show');
+    }
+
+    async function deleteDownload(id) {
+        const list = getSavedDownloads();
+        const record = list.find(d => d.id === id);
+        if (!record) {
+            closeDeleteModal();
+            return;
+        }
+
+        saveDownloads(list.filter(d => d.id !== id));
+        await deleteDownloadedContent(id);
+        closeDeleteModal();
+        renderDownloads();
+    }
+
+    async function openSavedDownload(record) {
+        if (!record) return;
+
+        const local = await getDownloadedContent(record.id);
+        const overlay = document.getElementById('collectivites-frame-overlay');
+        const title = document.getElementById('collectivites-frame-title');
+
+        if (local && typeof local.content === 'string') {
+            const frame = fenetreIntegreeFraiche();
+            if (title) title.textContent = record.title || 'Document';
+            if (frame) {
+                /* La copie locale est chargée avec srcdoc : aucun accès Internet
+                   n'est nécessaire pour ouvrir le document enregistré. */
+                frame.srcdoc = '<base href="' + String(local.baseUrl || '').replace(/"/g, '&quot;') + '">' + local.content;
+            }
+            if (overlay) {
+                overlay.classList.add('open');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+            document.body.style.overflow = 'hidden';
+            return;
+        }
+
+        /* Anciennes entrées non encore stockées localement. */
+        if (navigator.onLine && record.url) {
+            openCollectiviteLink(record.title, record.url);
+        } else {
+            alert("Ce document n'est pas encore enregistré hors connexion. Téléchargez-le une première fois avec Internet.");
+        }
+    }
+
+    function formatDownloadDate(iso) {
+        try {
+            return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function renderDownloads() {
+        const container = document.getElementById('downloads-list');
+        const empty = document.getElementById('downloads-empty');
+        if (!container || !empty) return;
+
+        const query = (document.getElementById('downloads-search-input')?.value || '').trim().toLowerCase();
+        let list = getSavedDownloads();
+        if (currentDownloadFilter !== 'all') {
+            list = list.filter(d => d.type === currentDownloadFilter);
+        }
+        if (query) {
+            list = list.filter(d => (d.title + ' ' + d.filename + ' ' + d.source).toLowerCase().includes(query));
+        }
+
+        container.innerHTML = '';
+        if (!list.length) {
+            container.style.display = 'none';
+            empty.style.display = 'block';
+        } else {
+            container.style.display = 'grid';
+            empty.style.display = 'none';
+            list.forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'download-card';
+                card.innerHTML = `
+                    <div class="download-card-icon"><svg class="ico"><use href="#fa-file-lines"></use></svg></div>
+                    <div class="download-card-info">
+                        <div class="download-card-title"></div>
+                        <div class="download-card-meta"></div>
+                    </div>
+                    <button class="download-card-delete" type="button" aria-label="Supprimer">
+                        <svg class="ico"><use href="#fa-trash"></use></svg>
+                    </button>`;
+                card.querySelector('.download-card-title').textContent = d.title;
+                const remaining = daysRemaining(d.date);
+                const expiryText = remaining <= 1 ? 'Expire aujourd\'hui' : `Expire dans ${remaining} j`;
+                card.querySelector('.download-card-meta').textContent = `${d.source} • ${formatDownloadDate(d.date)} • ${expiryText}`;
+
+                // Toute la carte ouvre le document.
+                card.onclick = () => openSavedDownload(d);
+
+                // La poubelle supprime uniquement le document et ne déclenche pas l'ouverture.
+                card.querySelector('.download-card-delete').onclick = async (event) => {
+                    event.stopPropagation();
+                    askDeleteDownload(d.id);
+                };
+
+                container.appendChild(card);
+            });
+        }
+        updateDownloadsEmptyState();
+        updateDownloadBadge();
+    }
+
+    function updateDownloadBadge() {
+        const badge = document.getElementById('downloads-badge');
+        if (!badge) return;
+        const count = getSavedDownloads().length;
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.style.display = count ? 'flex' : 'none';
+    }
+
+    // Réception des téléchargements signalés par index1.html (origine différente).
+    window.addEventListener('message', function(event) {
+        if (!event.data || event.data.type !== 'HNF_DOWNLOAD') return;
+        try {
+            const u = new URL(event.data.url, window.location.href);
+            if (u.hostname !== 'concourscomplet.vercel.app') return;
+            registerDownload({ ...event.data, url: u.href });
+        } catch (e) {}
+    });
+
+    function setDownloadFilter(filter, button) {
+        currentDownloadFilter = filter;
+        document.querySelectorAll('.download-tab').forEach(tab => tab.classList.remove('active'));
+        if (button) button.classList.add('active');
+        renderDownloads();
+    }
+
+    function filterDownloads() {
+        renderDownloads();
+    }
+
+    function updateDownloadsEmptyState() {
+        const title = document.getElementById('downloads-empty-title');
+        const text = document.getElementById('downloads-empty-text');
+        const query = (document.getElementById('downloads-search-input')?.value || '').trim();
+        if (!title || !text) return;
+        if (query) {
+            title.textContent = 'Aucun résultat';
+            text.textContent = 'Aucun téléchargement ne correspond à votre recherche.';
+        } else if (currentDownloadFilter === 'qcm') {
+            title.textContent = 'Aucun QCM téléchargé';
+            text.textContent = 'Téléchargez des QCM pour les consulter sans connexion.';
+        } else if (currentDownloadFilter === 'cours') {
+            title.textContent = 'Aucun cours téléchargé';
+            text.textContent = 'Téléchargez des cours pour les consulter sans connexion.';
+        } else if (currentDownloadFilter === 'actualite') {
+            title.textContent = 'Aucune actualité téléchargée';
+            text.textContent = 'Les contenus d’actualité téléchargés apparaîtront ici.';
+        } else {
+            title.textContent = 'Aucun téléchargement';
+            text.textContent = 'Téléchargez des cours ou des tests pour les consulter sans connexion.';
+        }
+    }
+
+    function handleProfileClick() {
+        if (isLoggedIn) {
+            goTo('view-profile', 'Mon Profil');
+            refreshClientData();
+        } else {
+            goTo('view-auth', 'Authentification');
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        purgeExpiredDownloads().finally(renderDownloads);
+
+    // Gestion des boutons de la fenêtre de confirmation.
+    document.getElementById('hnfDeleteNo')?.addEventListener('click', closeDeleteModal);
+    document.getElementById('hnfDeleteYes')?.addEventListener('click', async () => {
+        if (pendingDeleteId) await deleteDownload(pendingDeleteId);
+    });
+    document.getElementById('hnfDeleteModal')?.addEventListener('click', closeDeleteModal);
+
+    });
+
+</script>
+
+
+<div id="collectivites-frame-overlay" class="collectivites-frame-overlay" aria-hidden="true">
+  <div class="collectivites-frame-toolbar">
+    <button type="button" class="collectivites-frame-back" onclick="closeCollectiviteFrame()" aria-label="Retour">‹</button>
+    <div id="collectivites-frame-title" class="collectivites-frame-title">Concours des collectivités</div>
+  </div>
+  <iframe id="collectivites-frame" class="collectivites-frame" title="Concours des collectivités" allow="downloads"></iframe>
+</div>
+    <!-- Fenêtre de confirmation de suppression -->
+    <div id="hnfDeleteModal" class="hnf-delete-modal" role="dialog" aria-modal="true" aria-labelledby="hnfDeleteTitle">
+        <div class="hnf-delete-box" onclick="event.stopPropagation()">
+            <div class="hnf-delete-icon"><svg class="ico"><use href="#fa-trash"></use></svg></div>
+            <h3 id="hnfDeleteTitle" class="hnf-delete-title">Supprimer le téléchargement ?</h3>
+            <p id="hnfDeleteMessage" class="hnf-delete-message"></p>
+            <div class="hnf-delete-actions">
+                <button id="hnfDeleteNo" class="hnf-delete-no" type="button">Non</button>
+                <button id="hnfDeleteYes" class="hnf-delete-yes" type="button">Oui, supprimer</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Enregistrement du service worker : rend l'appli installable et utilisable hors-ligne.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+    </script>
+    <script>
+        // Protection anti-copie : bloque le menu (clic long / clic droit), le
+        // copier-coller et la sélection, sauf dans les vrais champs de saisie
+        // (nom, mot de passe, recherche...) où l'utilisateur doit pouvoir taper normalement.
+        function estChampDeSaisie(el) {
+            return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+        }
+        ['contextmenu', 'copy', 'cut', 'selectstart'].forEach(function (evt) {
+            document.addEventListener(evt, function (e) {
+                if (!estChampDeSaisie(e.target)) e.preventDefault();
+            });
+        });
+    </script>
+</body>
+</html>
