@@ -1742,6 +1742,8 @@ body { overflow-x:hidden; }
             if (side && side.classList.contains('open')) { toggleMenu(); return 'handled'; }
             const dd = document.getElementById('unlocked-dropdown');
             if (dd && dd.classList.contains('open')) { dd.classList.remove('open'); return 'handled'; }
+            // Sur l'accueil : on quitte l'application, même si l'historique contient d'anciens écrans
+            if (viewHistory[viewHistory.length - 1] === 'view-home') return 'exit';
             if (viewHistory.length > 1) { goBack(); return 'handled'; }
         } catch (e) {}
         return 'exit';
