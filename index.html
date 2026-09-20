@@ -550,9 +550,37 @@ body { overflow-x:hidden; }
         messagingSenderId: "974692519107",
         appId: "1:974692519107:web:e6605abf7fe44108fa6676"
     };
-    firebase.initializeApp(firebaseConfig);
-    const hnfAuth = firebase.auth();
-    const hnfDb = firebase.firestore();
+    // Si les bibliothèques Firebase ne peuvent pas se charger (téléphone hors ligne),
+    // on ne laisse pas toute la page s'arrêter : on utilise des remplaçants « hors ligne »
+    // qui restaurent la session à partir de la fiche mémorisée sur le téléphone.
+    let hnfFirebaseOk = false, hnfAuthReal = null, hnfDbReal = null;
+    try {
+        firebase.initializeApp(firebaseConfig);
+        hnfAuthReal = firebase.auth();
+        hnfDbReal = firebase.firestore();
+        hnfFirebaseOk = true;
+    } catch (e) {}
+    const hnfOfflineFail = function () { return Promise.reject(new Error('offline')); };
+    const hnfAuth = hnfFirebaseOk ? hnfAuthReal : {
+        onAuthStateChanged: function (cb) {
+            const run = function () {
+                try {
+                    const c = JSON.parse(localStorage.getItem('hnf_profile_cache') || 'null');
+                    if (c && c.docId) { cb({ email: c.docId + '@hnf.local' }); return; }
+                } catch (e) {}
+                cb(null);
+            };
+            if (document.readyState === 'complete') run(); else window.addEventListener('load', run);
+        },
+        signOut: function () { return Promise.resolve(); },
+        signInWithEmailAndPassword: hnfOfflineFail,
+        createUserWithEmailAndPassword: hnfOfflineFail
+    };
+    const hnfDb = hnfFirebaseOk ? hnfDbReal : {
+        collection: function () {
+            return { doc: function () { return { get: hnfOfflineFail, update: hnfOfflineFail, set: hnfOfflineFail }; } };
+        }
+    };
 </script>
 </head>
 <body>
