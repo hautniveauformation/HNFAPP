@@ -1727,6 +1727,26 @@ body { overflow-x:hidden; }
         }
     });
 
+    // Appelée par l'application Android (WebView) quand on appuie sur le bouton retour.
+    // Elle ferme d'abord ce qui est ouvert (message, paiement, fenêtre de contenu, menus),
+    // puis recule d'un écran. Elle répond 'exit' seulement quand il n'y a plus rien à fermer.
+    window.hnfNativeBack = function () {
+        try {
+            const dlg = document.querySelector('.hnf-dialog-overlay.open .hnf-dialog-btn');
+            if (dlg) { dlg.click(); return 'handled'; }
+            const pay = document.getElementById('payment-modal');
+            if (pay && pay.classList.contains('open')) { pay.classList.remove('open'); return 'handled'; }
+            const overlay = document.getElementById('collectivites-frame-overlay');
+            if (overlay && overlay.classList.contains('open')) { closeCollectiviteFrame(); return 'handled'; }
+            const side = document.getElementById('side-menu');
+            if (side && side.classList.contains('open')) { toggleMenu(); return 'handled'; }
+            const dd = document.getElementById('unlocked-dropdown');
+            if (dd && dd.classList.contains('open')) { dd.classList.remove('open'); return 'handled'; }
+            if (viewHistory.length > 1) { goBack(); return 'handled'; }
+        } catch (e) {}
+        return 'exit';
+    };
+
     function updateBottomNav(index) {
         const items = document.querySelectorAll('.nav-item');
         items.forEach(item => item.classList.remove('active'));
