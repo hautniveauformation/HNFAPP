@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b4d3c">
+<link rel="manifest" href="/admin-manifest.json">
+<link rel="icon" type="image/png" href="/admin-192.png">
+<link rel="apple-touch-icon" href="/admin-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HNF Admin">
 <title>Panneau Admin HNF</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -522,6 +530,13 @@
             document.getElementById('save-hint').textContent = "❌ Échec de l'enregistrement (" + ((err && err.code) || 'erreur inconnue') + "). Vos modifications sont toujours à l'écran : réessayez.";
         });
     }
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+        navigator.serviceWorker.register('/admin-sw.js', {scope: '/admin.html'}).catch(function(){});
+    });
+}
 </script>
 </body>
 </html>
