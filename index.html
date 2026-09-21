@@ -536,6 +536,10 @@ body { overflow-x:hidden; }
            sauf dans les vrais champs de saisie (nom, mot de passe, recherche...). */
         body, .view, .card, .list-item, .item-title, .item-desc { -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-touch-callout: none; }
         input, textarea { -webkit-user-select: text; -moz-user-select: text; user-select: text; -webkit-touch-callout: default; }
+
+/* ===== AJUSTEMENTS : badge téléchargements + flèche retour ===== */
+.downloads-header-actions .downloads-badge{position:static;top:auto;right:auto;min-width:38px;height:38px;padding:0 10px;border-radius:19px;font-size:17px;font-weight:800;color:#fff;background:linear-gradient(135deg,#f5904a 0%,#d85b2d 100%);border:3px solid #fff;box-shadow:0 0 0 2px #f3c4ad,0 5px 12px rgba(216,91,45,.35);letter-spacing:.3px;line-height:1}
+.sub-header .back-btn{color:#fff;font-size:29px}
 </style>
 <!-- ===== FIREBASE (projet hnf-acces) : Authentication + Firestore ===== -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -713,7 +717,7 @@ body { overflow-x:hidden; }
                         <h2>Préparez votre<br><span>réussite</span><br>aux concours</h2>
                         <p>Cours • QCM • Documents</p>
                         <div class="banner-buttons-row">
-                            <button class="btn-start" onclick="openCollectiviteLink('Gratuit', 'https://concourscomplet.vercel.app/CD/Gratuit/intexGratuit.html')">
+                            <button class="btn-start" onclick="openCollectiviteLink('Gratuit', 'https://concourscomplet.vercel.app/CD/Gratuit/indexGratuit.html')">
                                 <svg class="ico"><use href="#fa-graduation-cap"></use></svg> Commencer
                             </button>
                             <button class="btn-start" onclick="goTo('view-tarifs', 'Nos tarifs')">
@@ -782,7 +786,7 @@ body { overflow-x:hidden; }
             <a href="#" class="see-all">Voir tout <svg class="ico" style="font-size:10px;"><use href="#fa-chevron-right"></use></svg></a>
         </div>
         <div class="news-wrapper">
-            <div class="news-card news-category-card" onclick="alert('Info sur concours : contenu à venir.')">
+            <div class="news-card news-category-card" onclick="window.open('https://whatsapp.com/channel/0029Vb9AolOBPzjZ0h93Vr09', '_blank')">
                 <div class="news-icon-circle"><svg class="ico"><use href="#fa-graduation-cap"></use></svg></div>
                 <div class="news-content">
                     <h4>Info sur concours</h4>
