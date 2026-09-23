@@ -1510,6 +1510,15 @@ body { overflow-x:hidden; }
     let userPermissions = [];
     let userActif = false;
     let viewHistory = ['view-home'];
+    // Se souvient de la section actuellement ouverte dans la fenêtre intégrée
+    // (nom + adresse de son index de départ). "frameDepth" vaut 0 quand on est
+    // sur cet index (confirmé par la page elle-même via un message), et plus
+    // que 0 dès qu'on a ouvert un sujet - pour que le bouton retour recharge
+    // l'index au lieu de fermer directement toute la fenêtre.
+    let currentSectionName = '';
+    let currentSectionUrl = '';
+    let frameDepth = 0;
+    let dernierChargementEstIndex = false;
     let userName = '';
     let userPhone = '';
     let selectedPlanName = '';
@@ -1757,7 +1766,7 @@ body { overflow-x:hidden; }
     window.addEventListener('popstate', function () {
         const overlay = document.getElementById('collectivites-frame-overlay');
         if (overlay && overlay.classList.contains('open')) {
-            closeCollectiviteFrame();
+            collectivitesFrameBack();
             history.pushState({ hnfView: viewHistory[viewHistory.length - 1] }, '', location.pathname + location.search);
             return;
         }
@@ -1776,7 +1785,7 @@ body { overflow-x:hidden; }
             const pay = document.getElementById('payment-modal');
             if (pay && pay.classList.contains('open')) { pay.classList.remove('open'); return 'handled'; }
             const overlay = document.getElementById('collectivites-frame-overlay');
-            if (overlay && overlay.classList.contains('open')) { closeCollectiviteFrame(); return 'handled'; }
+            if (overlay && overlay.classList.contains('open')) { collectivitesFrameBack(); return 'handled'; }
             const side = document.getElementById('side-menu');
             if (side && side.classList.contains('open')) { toggleMenu(); return 'handled'; }
             const dd = document.getElementById('unlocked-dropdown');
@@ -2148,6 +2157,18 @@ body { overflow-x:hidden; }
         nouvelle.className = 'collectivites-frame';
         nouvelle.title = 'Concours des collectivités';
         nouvelle.setAttribute('allow', 'downloads');
+        nouvelle.addEventListener('load', function () {
+            // Petite marge pour laisser le temps au signal HNF_INDEX_LOADED
+            // (envoyé par la page elle-même) d'arriver, qu'il arrive avant
+            // ou juste après cet évènement de chargement.
+            setTimeout(function () {
+                if (dernierChargementEstIndex) {
+                    dernierChargementEstIndex = false;
+                } else {
+                    frameDepth++;
+                }
+            }, 50);
+        });
         ancienne.replaceWith(nouvelle);
         return nouvelle;
     }
@@ -2157,6 +2178,9 @@ body { overflow-x:hidden; }
             alert("Veuillez activer votre connexion Internet pour accéder à cette ressource.");
             return;
         }
+        currentSectionName = name;
+        currentSectionUrl = url;
+        frameDepth = 0;
         const overlay = document.getElementById('collectivites-frame-overlay');
         const title = document.getElementById('collectivites-frame-title');
         const frame = fenetreIntegreeFraiche();
@@ -2169,6 +2193,17 @@ body { overflow-x:hidden; }
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+    }
+
+    // Retour depuis la fenêtre intégrée : si on est allé plus loin que l'index de
+    // la section (ex. un sujet ouvert), on recharge cet index dans le même cadre ;
+    // sinon (déjà sur l'index, confirmé par la page elle-même), on ferme le cadre.
+    function collectivitesFrameBack() {
+        if (frameDepth > 0 && currentSectionUrl) {
+            openCollectiviteLink(currentSectionName, currentSectionUrl);
+        } else {
+            closeCollectiviteFrame();
+        }
     }
 
     function closeCollectiviteFrame() {
@@ -2461,7 +2496,13 @@ body { overflow-x:hidden; }
 
     // Réception des téléchargements signalés par index1.html (origine différente).
     window.addEventListener('message', function(event) {
-        if (!event.data || event.data.type !== 'HNF_DOWNLOAD') return;
+        if (!event.data) return;
+        if (event.data.type === 'HNF_INDEX_LOADED') {
+            dernierChargementEstIndex = true;
+            frameDepth = 0;
+            return;
+        }
+        if (event.data.type !== 'HNF_DOWNLOAD') return;
         try {
             const u = new URL(event.data.url, window.location.href);
             if (u.hostname !== 'concourscomplet.vercel.app') return;
@@ -2528,7 +2569,7 @@ body { overflow-x:hidden; }
 
 <div id="collectivites-frame-overlay" class="collectivites-frame-overlay" aria-hidden="true">
   <div class="collectivites-frame-toolbar">
-    <button type="button" class="collectivites-frame-back" onclick="closeCollectiviteFrame()" aria-label="Retour">‹</button>
+    <button type="button" class="collectivites-frame-back" onclick="collectivitesFrameBack()" aria-label="Retour">‹</button>
     <div id="collectivites-frame-title" class="collectivites-frame-title">Concours des collectivités</div>
   </div>
   <iframe id="collectivites-frame" class="collectivites-frame" title="Concours des collectivités" allow="downloads"></iframe>
