@@ -1510,11 +1510,13 @@ body { overflow-x:hidden; }
     let userPermissions = [];
     let userActif = false;
     let viewHistory = ['view-home'];
-    // Compte de combien de pages on est entré dans la fenêtre intégrée (Français, Maths, etc.)
-    // depuis son index de départ, pour que le bouton retour recule d'une page à la fois
-    // au lieu de fermer directement toute la fenêtre.
+    // Se souvient de la section actuellement ouverte dans la fenêtre intégrée
+    // (nom + adresse de son index de départ) et de si l'on a navigué plus loin
+    // que cet index, pour que le bouton retour puisse recharger l'index au lieu
+    // de fermer directement toute la fenêtre.
+    let currentSectionName = '';
+    let currentSectionUrl = '';
     let frameDepth = 0;
-    let ignoreNextFrameLoad = false;
     let userName = '';
     let userPhone = '';
     let selectedPlanName = '';
@@ -1762,14 +1764,7 @@ body { overflow-x:hidden; }
     window.addEventListener('popstate', function () {
         const overlay = document.getElementById('collectivites-frame-overlay');
         if (overlay && overlay.classList.contains('open')) {
-            const frame = document.getElementById('collectivites-frame');
-            if (frameDepth > 0 && frame && frame.contentWindow) {
-                ignoreNextFrameLoad = true;
-                frame.contentWindow.history.back();
-                frameDepth--;
-            } else {
-                closeCollectiviteFrame();
-            }
+            collectivitesFrameBack();
             history.pushState({ hnfView: viewHistory[viewHistory.length - 1] }, '', location.pathname + location.search);
             return;
         }
@@ -1788,17 +1783,7 @@ body { overflow-x:hidden; }
             const pay = document.getElementById('payment-modal');
             if (pay && pay.classList.contains('open')) { pay.classList.remove('open'); return 'handled'; }
             const overlay = document.getElementById('collectivites-frame-overlay');
-            if (overlay && overlay.classList.contains('open')) {
-                const frame = document.getElementById('collectivites-frame');
-                if (frameDepth > 0 && frame && frame.contentWindow) {
-                    ignoreNextFrameLoad = true;
-                    frame.contentWindow.history.back();
-                    frameDepth--;
-                } else {
-                    closeCollectiviteFrame();
-                }
-                return 'handled';
-            }
+            if (overlay && overlay.classList.contains('open')) { collectivitesFrameBack(); return 'handled'; }
             const side = document.getElementById('side-menu');
             if (side && side.classList.contains('open')) { toggleMenu(); return 'handled'; }
             const dd = document.getElementById('unlocked-dropdown');
@@ -2171,11 +2156,9 @@ body { overflow-x:hidden; }
         nouvelle.title = 'Concours des collectivités';
         nouvelle.setAttribute('allow', 'downloads');
         frameDepth = 0;
-        ignoreNextFrameLoad = false;
         let premierChargement = true;
         nouvelle.addEventListener('load', function () {
             if (premierChargement) { premierChargement = false; return; }
-            if (ignoreNextFrameLoad) { ignoreNextFrameLoad = false; return; }
             frameDepth++;
         });
         ancienne.replaceWith(nouvelle);
@@ -2187,6 +2170,8 @@ body { overflow-x:hidden; }
             alert("Veuillez activer votre connexion Internet pour accéder à cette ressource.");
             return;
         }
+        currentSectionName = name;
+        currentSectionUrl = url;
         const overlay = document.getElementById('collectivites-frame-overlay');
         const title = document.getElementById('collectivites-frame-title');
         const frame = fenetreIntegreeFraiche();
@@ -2201,12 +2186,12 @@ body { overflow-x:hidden; }
         document.body.style.overflow = 'hidden';
     }
 
+    // Retour depuis la fenêtre intégrée : si on est allé plus loin que l'index de
+    // la section (ex. un sujet ouvert), on recharge cet index dans le même cadre ;
+    // sinon (déjà sur l'index), on ferme complètement le cadre.
     function collectivitesFrameBack() {
-        const frame = document.getElementById('collectivites-frame');
-        if (frameDepth > 0 && frame && frame.contentWindow) {
-            ignoreNextFrameLoad = true;
-            frame.contentWindow.history.back();
-            frameDepth--;
+        if (frameDepth > 0 && currentSectionUrl) {
+            openCollectiviteLink(currentSectionName, currentSectionUrl);
         } else {
             closeCollectiviteFrame();
         }
