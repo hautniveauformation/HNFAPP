@@ -1511,12 +1511,14 @@ body { overflow-x:hidden; }
     let userActif = false;
     let viewHistory = ['view-home'];
     // Se souvient de la section actuellement ouverte dans la fenêtre intégrée
-    // (nom + adresse de son index de départ) et de si l'on a navigué plus loin
-    // que cet index, pour que le bouton retour puisse recharger l'index au lieu
-    // de fermer directement toute la fenêtre.
+    // (nom + adresse de son index de départ). "frameDepth" vaut 0 quand on est
+    // sur cet index (confirmé par la page elle-même via un message), et plus
+    // que 0 dès qu'on a ouvert un sujet - pour que le bouton retour recharge
+    // l'index au lieu de fermer directement toute la fenêtre.
     let currentSectionName = '';
     let currentSectionUrl = '';
     let frameDepth = 0;
+    let dernierChargementEstIndex = false;
     let userName = '';
     let userPhone = '';
     let selectedPlanName = '';
@@ -2155,11 +2157,13 @@ body { overflow-x:hidden; }
         nouvelle.className = 'collectivites-frame';
         nouvelle.title = 'Concours des collectivités';
         nouvelle.setAttribute('allow', 'downloads');
-        frameDepth = 0;
-        let premierChargement = true;
         nouvelle.addEventListener('load', function () {
-            if (premierChargement) { premierChargement = false; return; }
-            frameDepth++;
+            if (dernierChargementEstIndex) {
+                dernierChargementEstIndex = false;
+                frameDepth = 0;
+            } else {
+                frameDepth++;
+            }
         });
         ancienne.replaceWith(nouvelle);
         return nouvelle;
@@ -2172,6 +2176,7 @@ body { overflow-x:hidden; }
         }
         currentSectionName = name;
         currentSectionUrl = url;
+        frameDepth = 0;
         const overlay = document.getElementById('collectivites-frame-overlay');
         const title = document.getElementById('collectivites-frame-title');
         const frame = fenetreIntegreeFraiche();
@@ -2188,7 +2193,7 @@ body { overflow-x:hidden; }
 
     // Retour depuis la fenêtre intégrée : si on est allé plus loin que l'index de
     // la section (ex. un sujet ouvert), on recharge cet index dans le même cadre ;
-    // sinon (déjà sur l'index), on ferme complètement le cadre.
+    // sinon (déjà sur l'index, confirmé par la page elle-même), on ferme le cadre.
     function collectivitesFrameBack() {
         if (frameDepth > 0 && currentSectionUrl) {
             openCollectiviteLink(currentSectionName, currentSectionUrl);
@@ -2487,7 +2492,12 @@ body { overflow-x:hidden; }
 
     // Réception des téléchargements signalés par index1.html (origine différente).
     window.addEventListener('message', function(event) {
-        if (!event.data || event.data.type !== 'HNF_DOWNLOAD') return;
+        if (!event.data) return;
+        if (event.data.type === 'HNF_INDEX_LOADED') {
+            dernierChargementEstIndex = true;
+            return;
+        }
+        if (event.data.type !== 'HNF_DOWNLOAD') return;
         try {
             const u = new URL(event.data.url, window.location.href);
             if (u.hostname !== 'concourscomplet.vercel.app') return;
