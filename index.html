@@ -2105,7 +2105,7 @@ body { overflow-x:hidden; }
 
     // Bouton "Formation spéciale et intensive" : ouvre WhatsApp (lien factice).
     function openSpecialFormationWhatsApp() {
-        window.open('https://wa.me/22670000000?text=' + encodeURIComponent('Bonjour, je suis intéressé(e) par la Formation spéciale et intensive.'), '_blank');
+        window.open('https://wa.me/22672042908?text=' + encodeURIComponent('Bonjour, je suis intéressé(e) par la Formation spéciale et intensive.'), '_blank');
     }
 
     const orangeLogoSVG = '<svg viewBox="0 0 64 64" width="30" height="30"><circle cx="32" cy="32" r="30" fill="#FF7900"/><path d="M20 34 31 23 M31 23 31 31 M31 23 23 23" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 30 33 41 M33 41 33 33 M33 41 41 41" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -2220,11 +2220,12 @@ body { overflow-x:hidden; }
     const DOWNLOADS_DB_NAME = 'HNF_Downloads_DB';
     const DOWNLOADS_DB_VERSION = 1;
     const DOWNLOADS_STORE = 'documents';
-    const DOWNLOAD_EXPIRY_DAYS = 30;
+    const DOWNLOAD_EXPIRY_DAYS = 10;
+    const MAX_DOWNLOADS = 15;
     let currentDownloadFilter = 'all';
 
     /* Supprime automatiquement (métadonnées + contenu hors-ligne) tout
-       téléchargement enregistré depuis plus de 30 jours. */
+       téléchargement enregistré depuis plus de 10 jours. */
     async function purgeExpiredDownloads() {
         const list = getSavedDownloads();
         const maxAge = DOWNLOAD_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
@@ -2334,8 +2335,15 @@ body { overflow-x:hidden; }
 
     async function registerDownload(item) {
         if (!item || !item.url) return;
+        await purgeExpiredDownloads();
         const list = getSavedDownloads();
         const existing = list.findIndex(d => d.url === item.url);
+        /* Limite : 15 téléchargements au maximum. Un document déjà
+           téléchargé peut être retéléchargé (il est simplement renouvelé). */
+        if (existing < 0 && list.length >= MAX_DOWNLOADS) {
+            alert('⚠️ Limite atteinte : vous avez déjà ' + MAX_DOWNLOADS + ' téléchargements. Supprimez-en un dans la rubrique Téléchargements pour pouvoir en ajouter un nouveau.');
+            return;
+        }
         const record = {
             id: item.id || ('download_' + Date.now()),
             title: item.title || 'Document',
@@ -2350,7 +2358,7 @@ body { overflow-x:hidden; }
         } else {
             list.unshift(record);
         }
-        saveDownloads(list.slice(0, 200));
+        saveDownloads(list.slice(0, MAX_DOWNLOADS));
         if (typeof item.content === 'string' && item.content.length) {
             await saveDownloadedContent({ ...record, content: item.content, baseUrl: item.baseUrl || item.url });
         }
