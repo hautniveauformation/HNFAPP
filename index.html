@@ -861,7 +861,7 @@ body { overflow-x:hidden; }
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale Pro', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale Pro', 'https://concourscomplet.vercel.app/CP/CGP/indexCGP.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
                 <div class="list-text">Culture générale Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
@@ -990,7 +990,7 @@ body { overflow-x:hidden; }
         <div class="list-container">
             <p style="color: var(--text-gray); font-size: 13px; font-weight: 500; margin-top:0;">Sélectionnez une rubrique :</p>
 
-            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale Pro', '#')">
+            <div class="list-item collectivite-option" onclick="checkAccess('Culture générale Pro', 'https://concourscomplet.vercel.app/CP/CGP/indexCGP.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
                 <div class="list-text">Culture générale Pro<br><span style="font-size:10px;font-weight:500;color:#999;">Concours professionnel</span></div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
@@ -1624,7 +1624,7 @@ body { overflow-x:hidden; }
         // 3. Culture générale
         const cg = [];
         if (perms.includes('Culture générale')) cg.push({ n: 'Culture générale Direct', k: 'Culture générale', u: CC + 'CD/CGD/indexCGD.html', i: 'fa-globe' });
-        if (perms.includes('Culture générale Pro')) cg.push({ n: 'Culture générale Pro', k: 'Culture générale Pro', u: '#', i: 'fa-globe' });
+        if (perms.includes('Culture générale Pro')) cg.push({ n: 'Culture générale Pro', k: 'Culture générale Pro', u: CC + 'CP/CGP/indexCGP.html', i: 'fa-globe' });
         if (cg.length) groups.push({ title: 'Culture générale', color: PURPLE, items: cg });
 
         // 4. Concours Professionnel : une section par filière, avec les seules matières débloquées
@@ -1829,7 +1829,7 @@ body { overflow-x:hidden; }
                 <div class="list-text">Accompagnement final Pro</div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
             </div>
-            <div class="list-item" onclick="checkAccess('Culture générale Pro', '#')">
+            <div class="list-item" onclick="checkAccess('Culture générale Pro', 'https://concourscomplet.vercel.app/CP/CGP/indexCGP.html')">
                 <div class="list-icon"><svg class="ico"><use href="#fa-globe"></use></svg></div>
                 <div class="list-text">Culture générale Pro</div>
                 <div class="chevron"><svg class="ico" style="font-size:12px;"><use href="#fa-chevron-right"></use></svg></div>
